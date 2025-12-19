@@ -434,6 +434,9 @@ export const adminMenuItems: MenuItemProps[] = [
     createMenuItem("Tanker Requests", ["admin"], `${BASE_URLS.admin}/water-tanker/requests`, FaChevronCircleRight, COLORS.red),
     createMenuItem("Tanker Maintenance", ["admin"], `${BASE_URLS.admin}/water-tanker/availability`, FaChevronCircleRight, COLORS.purple),
   ]),
+
+  //contractor  , print contactor prayer
+          createMenuItem("Print Contractor Prayer", ["admin"], `${BASE_URLS.admin}/contractor/print-prayer`, FaChevronCircleRight, COLORS.blue, ),
 ];
 
 // Staff Menu

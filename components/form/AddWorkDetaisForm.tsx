@@ -340,8 +340,13 @@ export default function AddWorkDetailsForm({
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    mutation.mutate(values);
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await mutation.mutateAsync(values);
+    } catch (error) {
+      // Error is handled in mutation.onError
+      console.error("Failed to submit form:", error);
+    }
   };
 
   const handleWorkSelect = (work: ApprovedActionPlanDetails) => {
@@ -385,6 +390,9 @@ export default function AddWorkDetailsForm({
   const handleBack = () => {
     setCurrentStep(1);
   };
+
+  // Combined loading state - use mutation's isPending instead of formState.isSubmitting
+  const isSubmitting = mutation.isPending;
 
   return (
     <Card className="w-full max-w-6xl mx-auto shadow-2xl rounded-2xl border-0 bg-gradient-to-br from-white to-blue-50/30">
@@ -789,9 +797,6 @@ export default function AddWorkDetailsForm({
                               ).toLocaleString()}
                             </p>
                           </div>
-                          <div>
-                            <Button>Delete</Button>
-                          </div>
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -862,7 +867,12 @@ export default function AddWorkDetailsForm({
             {/* Navigation Buttons */}
             <div className="pt-6 flex justify-between">
               {currentStep === 2 && (
-                <Button type="button" variant="outline" onClick={handleBack}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleBack}
+                  disabled={isSubmitting}
+                >
                   <ChevronLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
               )}
@@ -871,7 +881,7 @@ export default function AddWorkDetailsForm({
                 <Button
                   type="button"
                   onClick={handleNext}
-                  disabled={!selectedWork}
+                  disabled={!selectedWork || isSubmitting}
                   className="ml-auto"
                 >
                   Next <StepForward className="ml-2 h-4 w-4" />
@@ -884,9 +894,9 @@ export default function AddWorkDetailsForm({
                   className="w-full h-14 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 
                   text-white rounded-xl shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] text-lg font-semibold
                   disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  disabled={form.formState.isSubmitting || !selectedWork}
+                  disabled={isSubmitting || !selectedWork}
                 >
-                  {form.formState.isSubmitting ? (
+                  {isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-6 w-6 animate-spin" />
                       Adding to Tender...

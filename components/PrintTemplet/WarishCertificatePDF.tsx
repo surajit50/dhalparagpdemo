@@ -160,6 +160,14 @@ export default function WarishCertificatePDF({
       const pdf = await generatePDF(templatePath, inputs);
       const blob = new Blob([pdf], { type: "application/pdf" });
 
+      // Always provide a download to the user first
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `warish_certificate_${applicationDetails.id || "unknown"}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+
       if (mode === "uploadAndDownload") {
         const base64Data: string = await new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -192,17 +200,9 @@ export default function WarishCertificatePDF({
           throw new Error("Upload failed");
         }
 
-        // Refresh the page using Next.js router
+        // Refresh the page after successful upload
         router.refresh();
       }
-
-      // Always provide a download to the user
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `warish_certificate_${applicationDetails.id || "unknown"}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
 
       toast({
         title: "Success",

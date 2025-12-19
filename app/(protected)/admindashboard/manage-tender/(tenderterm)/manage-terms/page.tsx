@@ -80,6 +80,14 @@ const toggleTermStatus = async (id: string, isActive: boolean) => {
   return response.json();
 };
 
+const duplicateTerm = async (id: string) => {
+  const response = await fetch(`/api/tender-terms/${id}/duplicate`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error("Failed to duplicate term");
+  return response.json();
+};
+
 const ManageTermsPage = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -126,6 +134,17 @@ const ManageTermsPage = () => {
     },
     onError: () => {
       toast.error("Failed to update term status");
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: duplicateTerm,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tender-terms'] });
+      toast.success(`Duplicated as "${data.title}"`);
+    },
+    onError: () => {
+      toast.error("Failed to duplicate term");
     },
   });
 
@@ -283,28 +302,35 @@ const ManageTermsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 p-4 sm:p-6 md:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent tracking-tight">
               Manage Tender Terms
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 text-lg font-medium">
               View, edit, and manage tender terms and conditions
             </p>
           </div>
-          <Button asChild className="whitespace-nowrap">
-            <Link href="/admindashboard/manage-tender/add-terms">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Term
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" asChild className="whitespace-nowrap border-gray-300 hover:bg-gray-50">
+              <Link href="/admindashboard/manage-tender/templates">
+                Manage Templates
+              </Link>
+            </Button>
+            <Button asChild className="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+              <Link href="/admindashboard/manage-tender/add-terms">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Term
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Actions and Filters */}
-        <Card className="shadow-lg">
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
@@ -379,12 +405,13 @@ const ManageTermsPage = () => {
         </Card>
 
         {/* Terms Table */}
-        <Card className="shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-semibold">
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100/50 rounded-t-lg">
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <div className="h-1 w-1 rounded-full bg-blue-600"></div>
               Tender Terms
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-600 font-medium">
               Manage all tender terms and conditions
             </CardDescription>
           </CardHeader>
@@ -441,7 +468,7 @@ const ManageTermsPage = () => {
                     </TableRow>
                   ) : (
                     filteredTerms.map((term) => (
-                      <TableRow key={term.id} className="group hover:bg-gray-50/50">
+                      <TableRow key={term.id} className="group hover:bg-blue-50/50 transition-colors duration-150">
                         <TableCell className="font-medium text-center">
                           {term.order}
                         </TableCell>
@@ -524,6 +551,14 @@ const ManageTermsPage = () => {
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => duplicateMutation.mutate(term.id)}
+                                  className="cursor-pointer"
+                                  disabled={duplicateMutation.isPending}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Duplicate
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>

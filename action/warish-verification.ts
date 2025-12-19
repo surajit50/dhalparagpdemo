@@ -4,9 +4,11 @@ import { WarishApplication, WarishDetail } from "@prisma/client";
 
 import { db } from "@/lib/db";
 
+
+
 export async function verifyWarishApplication(refNo: string) {
   try {
-    // First, find the application by reference number only
+    // Find the application by reference number
     const application = await db.warishApplication.findFirst({
       where: {
         warishRefNo: refNo,
@@ -16,21 +18,27 @@ export async function verifyWarishApplication(refNo: string) {
     console.log("Application found:", application);
 
     if (application) {
-      // Check if the reference date matches
-      // Simulate a check for genuineness
-      const isGenuine = application.warishApplicationStatus === "approved";
+      // Treat both 'approved' and 'renewed' as genuine applications
+      const isGenuine =
+        application.warishApplicationStatus === "approved" ||
+        application.warishApplicationStatus === "renewed";
+
       return {
         success: true,
         id: application.id,
         isGenuine,
         message: isGenuine
-          ? "Application verified successfully."
-          : "Application found, but not approved.",
+          ? `Application verified successfully (${
+              application.warishApplicationStatus === "renewed"
+                ? "Renewed"
+                : "Approved"
+            }).`
+          : "Application found, but not approved or renewed.",
       };
     } else {
       return {
         success: false,
-        message: "Application found, but the reference date does not match.",
+        message: "No application found with the given reference number.",
       };
     }
   } catch (error) {
@@ -61,3 +69,6 @@ export async function getWarishApplicationDetails(id: string) {
     throw new Error("Failed to fetch Warish application details");
   }
 }
+
+
+

@@ -43,8 +43,9 @@ export const bookNitNumber = async (
       tender_place_opening_bids: values.tender_place_opening_bids,
       tender_vilidity_bids: values.tender_vilidity_bids,
       supplynit: values.supplynit,
+      supplyitemname: values.supplyitemname,
       nitCount: values.nitCount,
-      termsTemplateIds: values.termsTemplateIds ?? [],
+      termsTemplateIds: values.termsTemplateIds || [],
     });
 
     // Check if the NIT number already exists in the same year
@@ -82,8 +83,9 @@ export const bookNitNumber = async (
         placeOfOpeningBids: validatedData.tender_place_opening_bids,
         bidValidity: parseInt(validatedData.tender_vilidity_bids),
         isSupply: validatedData.supplynit,
+        supplyitemname: validatedData.supplyitemname || null,
         nitCount: validatedData.nitCount,
-        termsTemplateIds: validatedData.termsTemplateIds ?? [],
+        termsTemplateIds: validatedData.termsTemplateIds || [],
       },
     });
 

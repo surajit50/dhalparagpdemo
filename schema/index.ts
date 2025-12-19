@@ -179,7 +179,14 @@ export const NitBookValidationSchema = z
         /^\d+(st|nd|rd|th) call$/,
         "Call count must be in the format '1st call', '2nd call', etc."
       ),
-    termsTemplateIds: z.array(z.string()).default([]),
+    termsTemplateIds: z
+      .array(z.string().min(1))
+      .optional()
+      .transform((value) => {
+        if (!value) return [];
+        const unique = Array.from(new Set(value.map((item) => item.trim()).filter(Boolean)));
+        return unique;
+      }),
   })
   .refine(
     (data) => {
