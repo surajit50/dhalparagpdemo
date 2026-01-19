@@ -106,10 +106,7 @@ export default function ProjectInfoCard({
                   preparedBy: e.target.value,
                 })
               }
-              disabled={workSelected}
-              className={`border-slate-300 ${
-                workSelected ? "bg-slate-100 cursor-not-allowed" : ""
-              }`}
+              className="border-slate-300"
             />
           </div>
           <div>
@@ -125,10 +122,7 @@ export default function ProjectInfoCard({
                   date: e.target.value,
                 })
               }
-              disabled={workSelected}
-              className={`border-slate-300 ${
-                workSelected ? "bg-slate-100 cursor-not-allowed" : ""
-              }`}
+              className="border-slate-300"
             />
           </div>
         </div>

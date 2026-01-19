@@ -227,6 +227,8 @@ export default function EstimatePreparationPage() {
         body: JSON.stringify({
           items: itemsToSave,
           workId: selectedWorkId,
+          projectInfo: projectInfo,
+          contingency: contingency,
         }),
       });
 

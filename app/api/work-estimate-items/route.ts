@@ -25,20 +25,35 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      if (items.length === 0) {
+      // Fetch project info from WorkEstimate
+      const workEstimate = await db.workEstimate.findUnique({
+        where: {
+          workDetailId: workId,
+        },
+      });
+
+      if (items.length === 0 && !workEstimate) {
         return NextResponse.json(null);
       }
 
       return NextResponse.json({
         items,
-        projectInfo: {
-          projectName: "",
-          projectCode: "",
-          location: "",
-          preparedBy: "",
-          date: new Date().toISOString().split("T")[0],
-        },
-        contingency: 0,
+        projectInfo: workEstimate
+          ? {
+              projectName: workEstimate.projectName,
+              projectCode: workEstimate.projectCode,
+              location: workEstimate.location,
+              preparedBy: workEstimate.preparedBy,
+              date: workEstimate.estimateDate.toISOString().split("T")[0],
+            }
+          : {
+              projectName: "",
+              projectCode: "",
+              location: "",
+              preparedBy: "",
+              date: new Date().toISOString().split("T")[0],
+            },
+        contingency: workEstimate?.contingency || 0,
       });
     }
 
@@ -71,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id;
     const body = await request.json();
-    const { items, workId } = body; // Add workId to request body
+    const { items, workId, projectInfo, contingency } = body; // Add projectInfo and contingency to request body
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -85,6 +100,32 @@ export async function POST(request: NextRequest) {
         { error: "Missing workId" },
         { status: 400 }
       );
+    }
+
+    // Save project info and contingency to WorkEstimate
+    if (projectInfo) {
+      await db.workEstimate.upsert({
+        where: {
+          workDetailId: workId,
+        },
+        update: {
+          projectName: projectInfo.projectName,
+          projectCode: projectInfo.projectCode,
+          location: projectInfo.location,
+          preparedBy: projectInfo.preparedBy,
+          estimateDate: new Date(projectInfo.date),
+          contingency: contingency || 0,
+        },
+        create: {
+          workDetailId: workId,
+          projectName: projectInfo.projectName,
+          projectCode: projectInfo.projectCode,
+          location: projectInfo.location,
+          preparedBy: projectInfo.preparedBy,
+          estimateDate: new Date(projectInfo.date),
+          contingency: contingency || 0,
+        },
+      });
     }
 
     // Check if estimate already exists for this work

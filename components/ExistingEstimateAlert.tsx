@@ -60,7 +60,18 @@ export default function ExistingEstimateAlert({
               Edit Estimate
             </Button>
             <Button
-              onClick={() => setShowPreview(true)}
+              onClick={() => {
+                setItems(existingEstimate.items || []);
+                setProjectInfo(existingEstimate.projectInfo || {
+                  projectName: "",
+                  projectCode: "",
+                  location: "",
+                  preparedBy: "",
+                  date: new Date().toISOString().split("T")[0],
+                });
+                setContingency(existingEstimate.contingency || 0);
+                setShowPreview(true);
+              }}
               size="sm"
               variant="outline"
               className="border-orange-300"

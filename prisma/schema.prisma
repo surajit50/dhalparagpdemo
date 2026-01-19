@@ -445,6 +445,7 @@ model WorksDetail {
   AOCDetails                  AOC[]
   workEstimateItems           WorkEstimateItem[]
   workMeasurementBooks        WorkMeasurementBook[]
+  workEstimate                WorkEstimate?
 }
 
 model Bidagency {
@@ -986,6 +987,25 @@ model adminMessage {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WorkEstimate {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  workDetailId String      @unique @db.ObjectId
+  workDetail   WorksDetail @relation(fields: [workDetailId], references: [id], onDelete: Cascade)
+
+  projectName  String
+  projectCode  String
+  location     String
+  preparedBy   String
+  estimateDate DateTime
+
+  contingency Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("work_estimates")
 }
 
 model BlogPost {
