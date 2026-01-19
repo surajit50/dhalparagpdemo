@@ -202,11 +202,30 @@ export default function EstimatePreparationPage() {
 
     setLoading(true);
     try {
+      // Prepare items for saving, including contingency
+      const itemsToSave = [...items];
+      if (contingency > 0) {
+        itemsToSave.push({
+          slNo: 9999,
+          schedulePageNo: "",
+          description: "Contingency",
+          nos: 1,
+          length: 0,
+          breadth: 0,
+          depth: 0,
+          quantity: 1,
+          unit: "LS",
+          rate: contingency,
+          amount: contingency,
+          measurements: [],
+        });
+      }
+
       const response = await fetch("/api/work-estimate-items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items,
+          items: itemsToSave,
           workId: selectedWorkId,
         }),
       });

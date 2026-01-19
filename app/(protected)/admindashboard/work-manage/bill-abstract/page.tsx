@@ -55,6 +55,7 @@ export default function BillAbstractPage() {
   const [mbEntries, setMbEntries] = useState<MBEntry[]>([]);
   const [billEntries, setBillEntries] = useState<BillAbstractEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
   const [formData, setFormData] = useState({
     billType: "1st & Final Bill",
@@ -448,4 +449,3 @@ export default function BillAbstractPage() {
 function setGeneratingPDF(arg0: boolean) {
   throw new Error("Function not implemented.");
 }
-

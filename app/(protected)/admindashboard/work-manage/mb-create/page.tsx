@@ -73,8 +73,12 @@ export default function MBCreatePage() {
   // Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<EstimateItem | null>(null);
-  const [currentEntryIndex, setCurrentEntryIndex] = useState<number | null>(null);
-  const [dialogMeasurements, setDialogMeasurements] = useState<Measurement[]>([]);
+  const [currentEntryIndex, setCurrentEntryIndex] = useState<number | null>(
+    null
+  );
+  const [dialogMeasurements, setDialogMeasurements] = useState<Measurement[]>(
+    []
+  );
 
   const [formData, setFormData] = useState({
     mbNumber: "",
@@ -112,7 +116,13 @@ export default function MBCreatePage() {
       const response = await fetch(`/api/work-estimate-items?workId=${workId}`);
       if (response.ok) {
         const data = await response.json();
-        setEstimateItems(data.items || data || []); // Handle both response formats
+        const allItems = data.items || data || [];
+        // Filter out Contingency item (slNo 9999)
+        const validItems = allItems.filter(
+          (item: any) =>
+            !(item.description === "Contingency" && item.slNo === 9999)
+        );
+        setEstimateItems(validItems);
       }
     } catch (error) {
       console.error("Error fetching estimate items:", error);
@@ -287,7 +297,7 @@ export default function MBCreatePage() {
       // My template defined columns: slNo, description, measurements, quantity, unit, rate, amount.
       // The input 'table' should be the content.
       // pdfme table plugin usually takes a JSON string of array of arrays if using the standard table schema.
-      
+
       const pdf = await generate({ template: mbTemplate, inputs });
       const blob = new Blob([pdf.buffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -360,7 +370,10 @@ export default function MBCreatePage() {
                       id="mbPageNumber"
                       value={formData.mbPageNumber}
                       onChange={(e) =>
-                        setFormData({ ...formData, mbPageNumber: e.target.value })
+                        setFormData({
+                          ...formData,
+                          mbPageNumber: e.target.value,
+                        })
                       }
                       placeholder="e.g., P-03"
                     />
@@ -372,7 +385,10 @@ export default function MBCreatePage() {
                       type="date"
                       value={formData.measuredDate}
                       onChange={(e) =>
-                        setFormData({ ...formData, measuredDate: e.target.value })
+                        setFormData({
+                          ...formData,
+                          measuredDate: e.target.value,
+                        })
                       }
                     />
                   </div>
