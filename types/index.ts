@@ -508,3 +508,17 @@ export type AddFinancialDetailsType = {
 
 // Alias for the original type name used in your bid form
 export type workdetailfinanicalProps = AddFinancialDetailsType
+
+
+export type comparativeStatementProps = Prisma.WorksDetailGetPayload<{
+  include: {
+    nitDetails: true;
+   ApprovedActionPlanDetails: true;
+    biddingAgencies: {
+      include: {
+        agencydetails: true;
+      };
+    };
+    
+         
+}}>

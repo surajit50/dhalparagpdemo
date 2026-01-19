@@ -171,17 +171,43 @@ export async function createBooking(data: {
   bookingDate: Date;
   amount: number;
 }) {
-  // Add date validation
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const bookingDate = new Date(data.bookingDate);
-  bookingDate.setHours(0, 0, 0, 0);
-
-  if (bookingDate < today) {
-    return { success: false, error: "Cannot book for past dates" };
-  }
-
   try {
+    // Validate and trim input data
+    const trimmedName = data.name?.trim() || "";
+    const trimmedAddress = data.address?.trim() || "";
+    const trimmedPhone = data.phone?.trim().replace(/\D/g, "") || "";
+
+    if (!trimmedName || trimmedName.length === 0) {
+      return { success: false, error: "Customer name is required" };
+    }
+
+    if (!trimmedAddress || trimmedAddress.length === 0) {
+      return { success: false, error: "Delivery address is required" };
+    }
+
+    if (!trimmedPhone || trimmedPhone.length !== 10) {
+      return { success: false, error: "Valid 10-digit phone number is required" };
+    }
+
+    if (!data.amount || data.amount <= 0) {
+      return { success: false, error: "Service fee must be greater than 0" };
+    }
+
+    // Validate and normalize date
+    const bookingDate = new Date(data.bookingDate);
+    if (isNaN(bookingDate.getTime())) {
+      return { success: false, error: "Invalid booking date" };
+    }
+
+    // Set time to start of day for consistent comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    bookingDate.setHours(0, 0, 0, 0);
+
+    if (bookingDate < today) {
+      return { success: false, error: "Cannot book for past dates" };
+    }
+
     const user = await currentUser();
     if (!user?.id) {
       return { success: false, error: "Authentication required" };
@@ -212,13 +238,17 @@ export async function createBooking(data: {
     const [booking] = await db.$transaction([
       db.booking.create({
         data: {
-          ...data,
-          bookingDate,
+          serviceType: data.serviceType,
+          name: trimmedName,
+          address: trimmedAddress,
+          phone: trimmedPhone,
+          bookingDate: bookingDate,
+          amount: data.amount,
           userId: user.id,
           status: "PENDING",
-          employeeId: user.id, // Add required field
-          isPaid: false, // Add default field
-          isDeposited: false, // Add default field
+          employeeId: user.id,
+          isPaid: false,
+          isDeposited: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -229,10 +259,20 @@ export async function createBooking(data: {
       }),
     ]);
 
-    return { success: true, bookingId: booking.id };
+    revalidatePath("/admindashboard/water-tanker/schedule");
+    revalidatePath("/admindashboard/water-tanker");
+
+    return { 
+      success: true, 
+      bookingId: booking.id,
+      message: `Booking created successfully for ${trimmedName}`,
+    };
   } catch (error) {
     console.error("Booking creation error:", error);
-    return { success: false, error: "Failed to create booking" };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to create booking" 
+    };
   }
 }
 

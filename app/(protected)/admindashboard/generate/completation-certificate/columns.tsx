@@ -14,7 +14,7 @@ import { Info } from "lucide-react";
 import { formatDate } from "@/utils/utils";
 import { ShowNitDetails } from "@/components/ShowNitDetails";
 import { ShowWorkOrderDetails } from "@/components/show-work-order-details";
-
+import { blockname, gpcode, gpname, nameinprodhan, gpaddress } from "@/constants/gpinfor";
 export const columns: ColumnDef<GetPaymentDetailstype>[] = [
   {
     accessorFn: (row) => row.id,
@@ -56,7 +56,7 @@ export const columns: ColumnDef<GetPaymentDetailstype>[] = [
         workorderdate={row.original.AwardofContract?.workordeermemodate}
         nitno={`${
           row.original.nitDetails.memoNumber
-        }/DGP/${row.original.nitDetails.memoDate.getFullYear()}`}
+        }/${gpcode}/${row.original.nitDetails.memoDate.getFullYear()}`}
         workname={row.original.ApprovedActionPlanDetails.activityDescription}
         slno={row.original.workslno.toFixed()}
       />

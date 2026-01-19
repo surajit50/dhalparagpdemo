@@ -8,14 +8,17 @@ import { getUserEmail } from "@/data/user";
 import { generateVerificationToken } from "@/lib/token";
 import { sendVerificationEmail } from "@/lib/mail";
 
-export const register = async (values: z.infer<typeof RegisterSchema>) => {
-  const validateField = RegisterSchema.safeParse(values);
+type RegisterInput = z.infer<typeof RegisterSchema>;
+type RegisterResult = { error?: string; success?: string };
 
-  if (!validateField.success) {
+export const register = async (values: RegisterInput): Promise<RegisterResult> => {
+  const parseResult = RegisterSchema.safeParse(values) as z.SafeParseReturnType<RegisterInput, RegisterInput>;
+
+  if (!parseResult.success) {
     return { error: "Invalid fields!" };
   }
 
-  const { email, password, name } = validateField.data;
+  const { email, password, name, mobileNumber } = parseResult.data;
 
   try {
     const normalizedEmail = email.toLowerCase();
@@ -30,6 +33,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     const user = await db.user.create({
       data: {
         name,
+        mobileNumber,
         email: normalizedEmail,
         password: hashedPassword,
       },
@@ -39,9 +43,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
       }
     });
 
-    // Explicit null check
     if (!user.email) {
-      await db.user.delete({ where: { id: user.id } });
       return { error: "Registration failed - email not set" };
     }
 

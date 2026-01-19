@@ -130,7 +130,7 @@ export async function getWorkOrderCertificateInput(workOrderDetails: Workorderde
   const table = createTableData();
 
   return {
-    refno: `${workOrderDetails.awardofcontractdetails?.workodermenonumber || ""}/DGP/${workorderyear}`,
+    refno: `${workOrderDetails.awardofcontractdetails?.workodermenonumber || ""}/${gpcode}/${workorderyear}`,
     gpname: `${gpname}`,
           gpaddress: `${gpaddress} , ${blockname}, Dakshin Dinajpur`,
           gpname2: `${nameinprodhan}`,
@@ -141,7 +141,7 @@ export async function getWorkOrderCertificateInput(workOrderDetails: Workorderde
     agencyadd: `${workOrderDetails.Bidagency?.agencydetails?.contactDetails || ""} - ${workOrderDetails.Bidagency?.agencydetails.mobileNumber || ""}`,
     fund: workOrderDetails.Bidagency?.WorksDetail?.ApprovedActionPlanDetails?.schemeName || "",
     worksl: `${workOrderDetails.Bidagency?.WorksDetail?.workslno || ""} out of ${nitworkcount}`,
-    nitno: `${workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoNumber || ""}/DGP/${getNitYear()} ${workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate ? formatDate(workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate) : ""}`,
+    nitno: `${workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoNumber || ""}/${gpcode}/${getNitYear()} ${workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate ? formatDate(workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate) : ""}`,
     workname: `${workOrderDetails.Bidagency?.WorksDetail?.ApprovedActionPlanDetails?.activityDescription || ""}-${workOrderDetails.Bidagency?.WorksDetail?.ApprovedActionPlanDetails?.activityCode || ""}`,
     body1: `As the rate offered by you for execution of the above mentioned scheme under ${workOrderDetails.Bidagency?.WorksDetail?.ApprovedActionPlanDetails?.schemeName || ""} fund, invited vide above NIT is found to be the 1st lowest, also in view of the agreement executed by you on ${formatDate(workOrderDetails.awardofcontractdetails?.workordeermemodate) || ""} for accomplishing the proposed consolidated work, following are the stipulated terms and conditions and the work order is hereby issued for execution of work at the accepted rate which is ${bidPercentage}% less than the NIT Tendered Amount.`,
     body2: "Entire work will have to be completed under the effective and technical guidance of Nirman Sahayak of Gram Panchayat. The said work shall have to be completed within 30(Thirty) days from the date of receiving the work order.",

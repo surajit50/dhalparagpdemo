@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown, Loader2, Printer, CheckCircle } from "lucide-react";
 import { generatePDF } from "../pdfgenerator";
 import { workdetailsforprint } from "@/types";
-
+import { gpcode } from "@/constants/gpinfor";
 const TEMPLATE_PATH = "/templates/scrutnisheettemplete.json";
 
 type PDFGeneratorProps = {
@@ -43,7 +43,7 @@ export default function PDFGeneratorComponent({
         {
           field2: `Scrutiny Report of Tender Papers for NIT No. ${
             workdetails.nitDetails.memoNumber
-          }/DGP/${new Date(workdetails.nitDetails.memoDate).getFullYear()} Dated: ${formatDate(
+          }/${gpcode}/${new Date(workdetails.nitDetails.memoDate).getFullYear()} Dated: ${formatDate(
             workdetails.nitDetails.memoDate
           )} Sl No. ${workdetails.workslno}`,
           field4: workdetails.ApprovedActionPlanDetails.activityDescription || "N/A",
@@ -56,7 +56,13 @@ export default function PDFGeneratorComponent({
           field31: workdetails.finalEstimateAmount.toFixed(2),
           agencytable: workdetails.biddingAgencies.map((agency, index) => [
             (index + 1).toString(),
-            agency.agencydetails.name,
+            agency.agencydetails.agencyType === "FARM"
+              ? `${agency.agencydetails.name}${
+                  agency.agencydetails.proprietorName
+                    ? ` (${agency.agencydetails.proprietorName})`
+                    : ""
+                }`
+              : agency.agencydetails.name,
             workdetails.participationFee.toFixed(2),
             workdetails.earnestMoneyFee.toFixed(2),
             agency.technicalEvelution?.credencial?.sixtyperamtput ? "Yes" : "No",

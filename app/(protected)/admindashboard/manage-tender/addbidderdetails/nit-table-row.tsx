@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/utils/utils";
 import { Badge } from "@/components/ui/badge";
-
+import { gpcode } from "@/constants/gpinfor";
 interface NitItem {
   memoNumber: number;
   memoDate: string | null;
@@ -32,7 +32,7 @@ export default function NitTableRow({ item, worklist }: NitTableRowProps) {
     <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell className="font-medium">
         {typeof item.memoNumber === "number"
-          ? `${item.memoNumber}/DGP/2024`
+          ? `${item.memoNumber}/${gpcode}/2024`
           : "N/A"}
       </TableCell>
       <TableCell className="max-w-xs">

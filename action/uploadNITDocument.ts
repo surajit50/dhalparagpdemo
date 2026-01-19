@@ -4,7 +4,7 @@ import { nitDocumentSchema } from "@/schema/nitDocumentSchema";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
 import { db } from "@/lib/db";
-
+import { gpcode } from "@/constants/gpinfor";
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -60,11 +60,11 @@ export async function uploadNITDocument(nitId: string, formData: FormData) {
 
     const newnotice = await db.notice.create({
       data: {
-        title: `${newnitdetails.memoNumber}/DGP/${newnitdetails.memoDate.getFullYear()}`,
+        title: `${newnitdetails.memoNumber}/${gpcode}/${newnitdetails.memoDate.getFullYear()}`,
         description: "Dhalpara Gram Panchayat",
         department: "P&rd",
         type: "Tender",
-        reference: `${newnitdetails.memoNumber}/DGP/${newnitdetails.memoDate.getFullYear()}` ,
+        reference: `${newnitdetails.memoNumber}/${gpcode}/${newnitdetails.memoDate.getFullYear()}` ,
         files: {
           create: {
             name: file.name,

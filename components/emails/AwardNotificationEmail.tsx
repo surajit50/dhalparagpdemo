@@ -10,7 +10,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-
+import { gpcode } from "@/constants/gpinfor";
 interface AwardNotificationEmailProps {
   nitNumber: number;
   nitDate: Date;
@@ -24,7 +24,7 @@ const AwardNotificationEmail = ({
   workslno,
   biddername,
 }: AwardNotificationEmailProps) => {
-  const nitdetails = `${nitNumber}/DGP/${nitDate.getFullYear()} Date:${formatDate(
+  const nitdetails = `${nitNumber}/${gpcode}/${nitDate.getFullYear()} Date:${formatDate(
     nitDate
   )} Work Sl no :${workslno}`;
 

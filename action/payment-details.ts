@@ -138,3 +138,207 @@ export const addPaymentDetails = async (
     return { error: "Failed to submit payment details. Please try again." };
   }
 };
+
+// Get payment details by ID
+export const getPaymentDetails = async (paymentDetailsId: string) => {
+  try {
+    const paymentDetails = await db.paymentDetails.findUnique({
+      where: { id: paymentDetailsId },
+      include: {
+        lessIncomeTax: true,
+        lessLabourWelfareCess: true,
+        lessTdsCgst: true,
+        lessTdsSgst: true,
+        securityDeposit: true,
+      },
+    });
+
+    if (!paymentDetails) {
+      return { error: "Payment details not found" };
+    }
+
+    return { success: true, paymentDetails };
+  } catch (error) {
+    console.error("Failed to fetch payment details:", error);
+    return { error: "Failed to fetch payment details. Please try again." };
+  }
+};
+
+// Update payment details
+export const updatePaymentDetails = async (
+  paymentDetailsId: string,
+  values: FormValues
+) => {
+  try {
+    // Check if payment details exist and is not verified
+    const existingPayment = await db.paymentDetails.findUnique({
+      where: { id: paymentDetailsId },
+    });
+
+    if (!existingPayment) {
+      return { error: "Payment details not found" };
+    }
+
+    if (existingPayment.isVerified) {
+      return { error: "Cannot edit verified payment details" };
+    }
+
+    // Validate the form data
+    const validatedData = formSchema.safeParse(values);
+    if (!validatedData.success) {
+      console.error("Validation failed:", validatedData.error);
+      return { error: "Invalid fields!" };
+    }
+
+    const currentDate = new Date();
+
+    // Update related records
+    await Promise.all([
+      db.incomeTaxRegister.update({
+        where: { id: existingPayment.incomeTaxRegisterId },
+        data: {
+          incomeTaaxAmount: validatedData.data.lessIncomeTax,
+        },
+      }),
+      db.labourWelfareCess.update({
+        where: { id: existingPayment.labourWelfareCessId },
+        data: {
+          labourWelfarecessAmt: validatedData.data.lessLabourWelfareCess,
+        },
+      }),
+      db.tdsCgst.update({
+        where: { id: existingPayment.tdsCgstId },
+        data: {
+          tdscgstAmt: validatedData.data.lessTdsCgst,
+        },
+      }),
+      db.tdsSgst.update({
+        where: { id: existingPayment.tdsSgstId },
+        data: {
+          tdsSgstAmt: validatedData.data.lessTdsSgst,
+        },
+      }),
+      db.secrutityDeposit.update({
+        where: { id: existingPayment.secrutityDepositId },
+        data: {
+          securityDepositAmt: validatedData.data.securityDeposit,
+          maturityDate: calculateMaturityDate(
+            validatedData.data.workcompletaitiondate || null,
+            validatedData.data.billPaymentDate
+          ),
+        },
+      }),
+    ]);
+
+    // Determine if the bill is final
+    const isfinalbill = validatedData.data.billType === "Final Bill";
+
+    // Update PaymentDetails record
+    const paymentDetails = await db.paymentDetails.update({
+      where: { id: paymentDetailsId },
+      data: {
+        grossBillAmount: validatedData.data.grossBillAmount,
+        billPaymentDate: validatedData.data.billPaymentDate,
+        eGramVoucher: validatedData.data.eGramVoucher,
+        eGramVoucherDate: validatedData.data.eGramVoucherDate,
+        gpmsVoucherNumber: validatedData.data.gpmsVoucherNumber,
+        gpmsVoucherDate: validatedData.data.gpmsVoucherDate,
+        mbrefno: validatedData.data.mbrefno,
+        billType: validatedData.data.billType,
+        isfinalbill,
+        netAmt: validatedData.data.netAmount,
+        workcompletaitiondate: validatedData.data.workcompletaitiondate || null,
+      },
+    });
+
+    // Revalidate the path to update the UI
+    revalidatePath("/admindashboard/addpaymentdetails");
+
+    return { success: true, paymentDetails };
+  } catch (error) {
+    console.error("Failed to update payment details:", error);
+    return { error: "Failed to update payment details. Please try again." };
+  }
+};
+
+// Delete payment details
+export const deletePaymentDetails = async (paymentDetailsId: string) => {
+  try {
+    // Check if payment details exist and is not verified
+    const existingPayment = await db.paymentDetails.findUnique({
+      where: { id: paymentDetailsId },
+    });
+
+    if (!existingPayment) {
+      return { error: "Payment details not found" };
+    }
+
+    if (existingPayment.isVerified) {
+      return { error: "Cannot delete verified payment details" };
+    }
+
+    // Delete related records
+    await Promise.all([
+      db.incomeTaxRegister.delete({
+        where: { id: existingPayment.incomeTaxRegisterId },
+      }),
+      db.labourWelfareCess.delete({
+        where: { id: existingPayment.labourWelfareCessId },
+      }),
+      db.tdsCgst.delete({
+        where: { id: existingPayment.tdsCgstId },
+      }),
+      db.tdsSgst.delete({
+        where: { id: existingPayment.tdsSgstId },
+      }),
+      db.secrutityDeposit.delete({
+        where: { id: existingPayment.secrutityDepositId },
+      }),
+    ]);
+
+    // Delete PaymentDetails record
+    await db.paymentDetails.delete({
+      where: { id: paymentDetailsId },
+    });
+
+    // Revalidate the paths to update the UI
+    revalidatePath("/admindashboard/addpaymentdetails");
+    revalidatePath("/admindashboard/verifypaymentdetails");
+    revalidatePath("/admindashboard/editpaymentdetails");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete payment details:", error);
+    return { error: "Failed to delete payment details. Please try again." };
+  }
+};
+
+// Verify payment details
+export const verifyPaymentDetails = async (paymentDetailsId: string) => {
+  try {
+    // Check if payment details exist
+    const existingPayment = await db.paymentDetails.findUnique({
+      where: { id: paymentDetailsId },
+    });
+
+    if (!existingPayment) {
+      return { error: "Payment details not found" };
+    }
+
+    // Update verification status
+    const paymentDetails = await db.paymentDetails.update({
+      where: { id: paymentDetailsId },
+      data: {
+        isVerified: true,
+      },
+    });
+
+    // Revalidate the path to update the UI
+    revalidatePath("/admindashboard/addpaymentdetails");
+
+    return { success: true, paymentDetails };
+  } catch (error) {
+    console.error("Failed to verify payment details:", error);
+    return { error: "Failed to verify payment details. Please try again." };
+  }
+};

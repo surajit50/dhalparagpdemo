@@ -1,7 +1,8 @@
+
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFormContext, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import {
   Loader2,
   Search,
@@ -107,6 +109,7 @@ const formSchema = z
     final_Estimate_Amount: z
       .string()
       .nonempty("Final estimate amount is required"),
+    useSameAsEstimatedCost: z.boolean().default(false), // Added checkbox field
   })
   .superRefine((data, ctx) => {
     if (data.participation_fee_type === "Other" && !data.participation_fee) {
@@ -116,34 +119,38 @@ const formSchema = z
         message: "Please enter participation fee amount",
       });
     }
-    if (
-      data.final_Estimate_Amount_type === "Other" &&
-      !data.final_Estimate_Amount
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["final_Estimate_Amount"],
-        message: "Please enter final estimate amount",
-      });
+    
+    // Only validate final estimate amount if checkbox is NOT checked
+    if (!data.useSameAsEstimatedCost) {
+      if (
+        data.final_Estimate_Amount_type === "Other" &&
+        !data.final_Estimate_Amount
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["final_Estimate_Amount"],
+          message: "Please enter final estimate amount",
+        });
+      }
+
+      if (
+        data.final_Estimate_Amount &&
+        isNaN(Number(data.final_Estimate_Amount))
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["final_Estimate_Amount"],
+          message: "Final estimate amount must be a valid number",
+        });
+      }
     }
 
-    // Validate numeric values
+    // Validate participation fee numeric value
     if (data.participation_fee && isNaN(Number(data.participation_fee))) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["participation_fee"],
         message: "Participation fee must be a valid number",
-      });
-    }
-
-    if (
-      data.final_Estimate_Amount &&
-      isNaN(Number(data.final_Estimate_Amount))
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["final_Estimate_Amount"],
-        message: "Final estimate amount must be a valid number",
       });
     }
   });
@@ -165,6 +172,7 @@ interface SelectWithOtherProps {
   onValueChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   placeholder?: string;
+  disabled?: boolean; // Added disabled prop
 }
 
 const SelectWithOther = ({
@@ -178,6 +186,7 @@ const SelectWithOther = ({
   onValueChange,
   error,
   placeholder = "Enter custom amount",
+  disabled = false, // Added disabled with default false
 }: SelectWithOtherProps) => {
   const form = useFormContext<FormValues>();
 
@@ -202,8 +211,12 @@ const SelectWithOther = ({
       </Label>
 
       <div className="space-y-3">
-        <Select value={selectedType} onValueChange={handleTypeChange}>
-          <SelectTrigger className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+        <Select 
+          value={selectedType} 
+          onValueChange={handleTypeChange}
+          disabled={disabled}
+        >
+          <SelectTrigger className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed">
             <SelectValue placeholder={`Select ${label}`} />
           </SelectTrigger>
           <SelectContent>
@@ -230,9 +243,10 @@ const SelectWithOther = ({
                 value={selectedValue}
                 onChange={onValueChange}
                 placeholder={placeholder}
-                className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 pl-12"
+                className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 pl-12 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="number"
                 min="0"
+                disabled={disabled}
               />
               <IndianRupee className="absolute left-4 top-3 h-6 w-6 text-gray-400" />
             </motion.div>
@@ -278,8 +292,38 @@ export default function AddWorkDetailsForm({
       participation_fee: "",
       final_Estimate_Amount_type: "",
       final_Estimate_Amount: "",
+      useSameAsEstimatedCost: false,
     },
   });
+
+  // Watch for checkbox changes
+  const useSameAsEstimatedCost = form.watch("useSameAsEstimatedCost");
+
+  // Effect to handle checkbox changes
+  useEffect(() => {
+    if (useSameAsEstimatedCost && selectedWork) {
+      const workEstimatedCost = selectedWork.estimatedCost.toString();
+      
+      // Check if the work's estimated cost is in the predefined list
+      const isPredefinedValue = predefinedFinalEstimates.includes(workEstimatedCost);
+      
+      if (isPredefinedValue) {
+        form.setValue("final_Estimate_Amount_type", workEstimatedCost);
+      } else {
+        form.setValue("final_Estimate_Amount_type", "Other");
+      }
+      
+      form.setValue("final_Estimate_Amount", workEstimatedCost);
+      
+      // Clear any validation errors for final estimate amount
+      form.clearErrors("final_Estimate_Amount");
+      form.clearErrors("final_Estimate_Amount_type");
+    } else if (!useSameAsEstimatedCost) {
+      // Clear the values when checkbox is unchecked
+      form.setValue("final_Estimate_Amount_type", "");
+      form.setValue("final_Estimate_Amount", "");
+    }
+  }, [useSameAsEstimatedCost, selectedWork, form]);
 
   // Fetch financial years
   const { data: financialYears } = useQuery({
@@ -353,6 +397,20 @@ export default function AddWorkDetailsForm({
     setSelectedWork(work);
     form.setValue("approvedActionPlanId", work.id);
     form.clearErrors("approvedActionPlanId");
+    
+    // If checkbox was already checked, update the final estimate with new work's cost
+    if (useSameAsEstimatedCost) {
+      const workEstimatedCost = work.estimatedCost.toString();
+      const isPredefinedValue = predefinedFinalEstimates.includes(workEstimatedCost);
+      
+      if (isPredefinedValue) {
+        form.setValue("final_Estimate_Amount_type", workEstimatedCost);
+      } else {
+        form.setValue("final_Estimate_Amount_type", "Other");
+      }
+      
+      form.setValue("final_Estimate_Amount", workEstimatedCost);
+    }
   };
 
   const clearAllFilters = () => {
@@ -360,6 +418,7 @@ export default function AddWorkDetailsForm({
     setSelectedFinancialYear("");
     setSelectedWork(null);
     form.setValue("approvedActionPlanId", "");
+    form.setValue("useSameAsEstimatedCost", false);
     setPage(1);
   };
 
@@ -830,35 +889,62 @@ export default function AddWorkDetailsForm({
                       placeholder="Enter participation fee amount"
                     />
 
-                    <SelectWithOther
-                      name="final_Estimate_Amount"
-                      options={finalEstimateOptions}
-                      predefinedValues={predefinedFinalEstimates}
-                      label="Final Estimate Amount"
-                      selectedType={form.watch("final_Estimate_Amount_type")}
-                      selectedValue={form.watch("final_Estimate_Amount")}
-                      onTypeChange={(value) =>
-                        form.setValue("final_Estimate_Amount_type", value)
-                      }
-                      onValueChange={(e) =>
-                        form.setValue("final_Estimate_Amount", e.target.value)
-                      }
-                      error={
-                        form.formState.errors.final_Estimate_Amount?.message
-                      }
-                      placeholder="Enter final estimate amount"
-                    />
+                    <div className="space-y-4">
+                      {/* Checkbox for using same as estimated cost */}
+                      {selectedWork && (
+                        <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
+                          <Checkbox
+                            id="useSameAsEstimatedCost"
+                            checked={useSameAsEstimatedCost}
+                            onCheckedChange={(checked) => {
+                              form.setValue("useSameAsEstimatedCost", checked as boolean);
+                            }}
+                          />
+                          <Label
+                            htmlFor="useSameAsEstimatedCost"
+                            className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            Use same as Estimated Cost (₹{Number(selectedWork.estimatedCost).toLocaleString()})
+                          </Label>
+                        </div>
+                      )}
+
+                      <SelectWithOther
+                        name="final_Estimate_Amount"
+                        options={finalEstimateOptions}
+                        predefinedValues={predefinedFinalEstimates}
+                        label="Final Estimate Amount"
+                        selectedType={form.watch("final_Estimate_Amount_type")}
+                        selectedValue={form.watch("final_Estimate_Amount")}
+                        onTypeChange={(value) =>
+                          form.setValue("final_Estimate_Amount_type", value)
+                        }
+                        onValueChange={(e) =>
+                          form.setValue("final_Estimate_Amount", e.target.value)
+                        }
+                        error={
+                          form.formState.errors.final_Estimate_Amount?.message
+                        }
+                        placeholder="Enter final estimate amount"
+                        disabled={useSameAsEstimatedCost}
+                      />
+                    </div>
                   </div>
                 </div>
+                
+                {/* Warning message when manually entered amount differs from selected work's cost */}
                 {selectedWork &&
+                  !useSameAsEstimatedCost &&
                   form.watch("final_Estimate_Amount") &&
                   Number(form.watch("final_Estimate_Amount")) !==
                     Number(selectedWork.estimatedCost) && (
-                    <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded-lg mb-4">
+                    <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mb-4">
                       <AlertCircle className="h-4 w-4" />
-                      Warning: Final Estimate Amount does not match the
-                      Estimated Cost from the selected work (₹
-                      {Number(selectedWork.estimatedCost).toLocaleString()}).
+                      <span>
+                        Note: Final Estimate Amount does not match the Estimated Cost from the selected work (₹
+                        {Number(selectedWork.estimatedCost).toLocaleString()}).
+                      </span>
                     </div>
                   )}
               </>

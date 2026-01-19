@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -18,7 +17,7 @@ import { WorkOrderStatus } from "@/components/work-order-status";
 import { StatusAlert } from "@/components/status-alert";
 import { Badge } from "@/components/ui/badge";
 import { ShowNitDetails } from "@/components/ShowNitDetails";
-
+import { gpcode } from "@/constants/gpinfor";
 export default async function AwardOfContractPage({
   searchParams,
 }: {
@@ -77,7 +76,7 @@ export default async function AwardOfContractPage({
         />
       </TableCell>
       <TableCell className="font-medium text-blue-600">
-        {order.awardofcontractdetails?.workodermenonumber}/DGP/
+        {order.awardofcontractdetails?.workodermenonumber}/${gpcode}/
         {order.awardofcontractdetails?.workordeermemodate.getFullYear()}
       </TableCell>
       <TableCell>

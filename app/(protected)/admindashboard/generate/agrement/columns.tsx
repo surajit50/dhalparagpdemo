@@ -13,7 +13,7 @@ import {
 import { Info } from "lucide-react";
 import { formatDate } from "@/utils/utils";
 import { ShowNitDetails } from "@/components/ShowNitDetails";
-
+import { blockname, gpcode, gpname, nameinprodhan, gpaddress } from "@/constants/gpinfor";
 export const columns: ColumnDef<Agreement>[] = [
   {
     accessorFn: (row) => row.id,

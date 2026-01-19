@@ -12,7 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
-import { useTransition, useState, useCallback, memo } from "react";
+import { useTransition, useState, useCallback, memo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ interface WorkDetailsListProps {
     WorksDetail: Array<{
       id: string;
       finalEstimateAmount: number;
+      estimateValue?: number; // Add new field
       participationFee: number;
       earnestMoneyFee: number;
       tenderStatus: string;
@@ -63,6 +64,9 @@ const WorkDetailItem = memo(
     onDelete: (id: string) => void;
     isPending: boolean;
   }) => {
+    // Use finalEstimateAmount as estimateValue if not provided
+    const estimateValue = item.estimateValue || item.finalEstimateAmount;
+    
     return (
       <AccordionItem value={item.id} className="border rounded-lg mb-4">
         <AccordionTrigger className="hover:no-underline px-4 hover:bg-gray-50 rounded-t-lg">
@@ -80,6 +84,10 @@ const WorkDetailItem = memo(
                 </p>
                 <p>
                   Estimate Cost: ₹{item.finalEstimateAmount.toLocaleString()}
+                </p>
+                {/* Display estimate value */}
+                <p className="text-sm text-gray-600">
+                  Est. Value: ₹{estimateValue.toLocaleString()}
                 </p>
               </div>
               <p className="text-sm text-gray-500 truncate">
@@ -107,6 +115,11 @@ const WorkDetailItem = memo(
               <DetailItem
                 label="Estimated Cost"
                 value={`₹${item.finalEstimateAmount.toLocaleString()}`}
+              />
+              {/* Add estimate value display */}
+              <DetailItem
+                label="Estimate Value"
+                value={`₹${estimateValue.toLocaleString()}`}
               />
             </div>
             <DetailItem
@@ -182,6 +195,7 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
   const [editFields, setEditFields] = useState({
     finalEstimateAmount: "",
     participationFee: "",
+    estimateValue: "", // Add new field
   });
 
   const router = useRouter();
@@ -192,6 +206,12 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
   // Calculate total estimated amount
   const totalEstimatedAmount = workDetails.WorksDetail.reduce(
     (sum, item) => sum + item.finalEstimateAmount,
+    0
+  );
+
+  // Calculate total estimate value (use estimateValue if available, otherwise use finalEstimateAmount)
+  const totalEstimateValue = workDetails.WorksDetail.reduce(
+    (sum, item) => sum + (item.estimateValue || item.finalEstimateAmount),
     0
   );
 
@@ -258,11 +278,24 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
       setEditFields({
         finalEstimateAmount: item.finalEstimateAmount.toString(),
         participationFee: item.participationFee.toString(),
+        // Use estimateValue if available, otherwise use finalEstimateAmount
+        estimateValue: (item.estimateValue || item.finalEstimateAmount).toString(),
       });
       setShowEditModal(true);
     },
-    [setEditWork, setEditFields, setShowEditModal, workDetails]
+    [setEditWork, setEditFields, setShowEditModal]
   );
+
+  // Auto-update estimateValue when finalEstimateAmount changes in the form
+  useEffect(() => {
+    if (showEditModal) {
+      const finalEstimateAmount = Number(editFields.finalEstimateAmount) || 0;
+      setEditFields(prev => ({
+        ...prev,
+        estimateValue: finalEstimateAmount.toString()
+      }));
+    }
+  }, [editFields.finalEstimateAmount, showEditModal]);
 
   const handleEditSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -277,6 +310,7 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
             body: JSON.stringify({
               finalEstimateAmount: Number(editFields.finalEstimateAmount),
               participationFee: Number(editFields.participationFee),
+              estimateValue: Number(editFields.estimateValue), // Send estimateValue
             }),
           });
           const data = await res.json();
@@ -307,7 +341,7 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
   const closeEditModal = useCallback(() => {
     setShowEditModal(false);
     setEditWork(null);
-  }, [setShowEditModal, setEditWork]);
+  }, []);
 
   if (workDetails.WorksDetail.length === 0) {
     return (
@@ -322,19 +356,35 @@ function WorkDetailsList({ workDetails }: WorkDetailsListProps) {
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardContent className="py-6">
-        {/* Total Estimated Amount Display */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-blue-800">
-              Total Estimated Amount
-            </h3>
-            <p className="text-2xl font-bold text-blue-900">
-              ₹{totalEstimatedAmount.toLocaleString()}
+        {/* Display both totals */}
+        <div className="mb-6 space-y-4">
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-blue-800">
+                Total Estimated Amount
+              </h3>
+              <p className="text-2xl font-bold text-blue-900">
+                ₹{totalEstimatedAmount.toLocaleString()}
+              </p>
+            </div>
+            <p className="text-sm text-blue-600 mt-1">
+              Based on {workDetails.WorksDetail.length} work items
             </p>
           </div>
-          <p className="text-sm text-blue-600 mt-1">
-            Based on {workDetails.WorksDetail.length} work items
-          </p>
+          
+          <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-green-800">
+                Total Estimate Value
+              </h3>
+              <p className="text-2xl font-bold text-green-900">
+                ₹{totalEstimateValue.toLocaleString()}
+              </p>
+            </div>
+            <p className="text-sm text-green-600 mt-1">
+              Auto-calculated from final estimate amounts
+            </p>
+          </div>
         </div>
 
         <Accordion type="single" collapsible className="w-full">
@@ -387,11 +437,16 @@ const EditWorkModal = memo(
   }: {
     open: boolean;
     onClose: () => void;
-    editFields: { finalEstimateAmount: string; participationFee: string };
+    editFields: { 
+      finalEstimateAmount: string; 
+      participationFee: string;
+      estimateValue: string; // Add new field
+    };
     setEditFields: React.Dispatch<
       React.SetStateAction<{
         finalEstimateAmount: string;
         participationFee: string;
+        estimateValue: string; // Add new field
       }>
     >;
     onSubmit: (e: React.FormEvent) => void;
@@ -405,7 +460,7 @@ const EditWorkModal = memo(
         <form onSubmit={onSubmit} className="space-y-4 mt-4">
           <div>
             <label className="block text-sm font-medium mb-1">
-              Estimate Amount (₹)
+              Final Estimate Amount (₹)
             </label>
             <Input
               name="finalEstimateAmount"
@@ -419,8 +474,27 @@ const EditWorkModal = memo(
               }
               required
               min="0"
+              step="0.01"
             />
           </div>
+          
+          {/* Estimate Value field (auto-populated and read-only) */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Estimate Value (₹) <span className="text-xs text-gray-500">(auto-calculated)</span>
+            </label>
+            <Input
+              name="estimateValue"
+              type="number"
+              value={editFields.estimateValue}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              This value is automatically set to match the Final Estimate Amount
+            </p>
+          </div>
+          
           <div>
             <label className="block text-sm font-medium mb-1">
               Participation Fee (₹)
@@ -437,6 +511,7 @@ const EditWorkModal = memo(
               }
               required
               min="0"
+              step="0.01"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">

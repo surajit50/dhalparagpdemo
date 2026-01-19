@@ -5,8 +5,8 @@ import { ServiceType } from "@prisma/client";
 
 // Maximum slots per day for each service
 const MAX_SLOTS = {
-  WATER_TANKER: 10,
-  DUSTBIN_VAN: 8,
+  WATER_TANKER: 3,
+  DUSTBIN_VAN: 4,
 };
 
 export async function GET(req: NextRequest) {

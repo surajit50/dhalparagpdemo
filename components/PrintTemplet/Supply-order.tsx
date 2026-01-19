@@ -10,7 +10,7 @@ import type { Font } from "@pdfme/common";
 import { workorderforward } from "@/constants";
 import { formatDate } from "@/utils/utils";
 import { getworklenthbynitno } from "@/lib/auth";
-
+import { gpcode } from "@/constants/gpinfor";
 const templatePath = "/templates/supplyorder.json";
 
 const customFonts: Font = {
@@ -90,7 +90,7 @@ export default function SupplyOrder({
         {
           refno: `${
             workOrderDetails.awardofcontractdetails?.workodermenonumber || ""
-          }/DGP/${workorderyear}`,
+          }/${gpcode}/${workorderyear}`,
           refdate:
             formatDate(
               workOrderDetails.awardofcontractdetails?.workordeermemodate
@@ -110,7 +110,7 @@ export default function SupplyOrder({
           nitno: `${
             workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoNumber ||
             ""
-          }/DGP/${getNitYear()} ${
+          }/${gpcode}/${getNitYear()} ${
             workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate
               ? formatDate(
                   workOrderDetails.Bidagency?.WorksDetail?.nitDetails?.memoDate

@@ -6,6 +6,7 @@ import { formatDate } from "@/utils/utils";
 import { Loader2, FileCheck, AlertCircle, Printer } from "lucide-react";
 import { generatePDF } from "../pdfgenerator";
 import { CompletationCertificate } from "@/types";
+import { gpcode } from "@/constants/gpinfor";
 const templatePath = "/templates/completationcertificate.json";
 
 export default function Completationcertificate({
@@ -25,19 +26,33 @@ export default function Completationcertificate({
     try {
       const paymentDetails = paymentdetails.paymentDetails || [];
 
+      const agencyname =
+        paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency
+          ?.agencydetails.agencyType === "FARM"
+          ? `${
+              paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency
+                ?.agencydetails.name
+            }${
+              paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency
+                ?.agencydetails.proprietorName
+                ? ` (${paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency?.agencydetails.proprietorName})`
+                : ""
+            }`
+          : `${paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency?.agencydetails.name}`;
+
       const inputs = [
         {
-          agencydetails: `This is to certify that ${paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency?.agencydetails.name}, located at ${paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency?.agencydetails.contactDetails}, has successfully completed the following work:`,
+          agencydetails: `This is to certify that ${agencyname}, located at ${paymentdetails.AwardofContract?.workorderdetails?.[0]?.Bidagency?.agencydetails.contactDetails}, has successfully completed the following work:`,
           workname:
             paymentdetails.ApprovedActionPlanDetails.activityDescription,
           nitdetails: `${
             paymentdetails.nitDetails.memoNumber
-          }/DGP/${paymentdetails.nitDetails.memoDate.getFullYear()} Date:-${formatDate(
+          }/${gpcode}/${paymentdetails.nitDetails.memoDate.getFullYear()} Date:-${formatDate(
             paymentdetails.nitDetails.memoDate
           )} Work Sl no ${paymentdetails.workslno}`,
           workorderno: `${
             paymentdetails.AwardofContract?.workodermenonumber
-          }/DGP/${paymentdetails.AwardofContract?.workordeermemodate.getFullYear()} Date:-${
+          }/${gpcode}/${paymentdetails.AwardofContract?.workordeermemodate.getFullYear()} Date:-${
             paymentdetails.AwardofContract?.workordeermemodate
               ? formatDate(paymentdetails.AwardofContract?.workordeermemodate)
               : "N/A"

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { format } from "date-fns";
+import { Suspense } from "react";
 import {
   Card,
   CardContent,
@@ -26,6 +27,9 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { ExportButton } from "./export-button";
+import { FinancialYearSelector } from "./financial-year-selector";
+import { SchemeFilter } from "./scheme-filter";
+import { getFinancialYearDateRange, getCurrentFinancialYear } from "@/utils/financialYear";
 
 interface WorkDetailWithRelations {
   id?: string | number;
@@ -63,14 +67,29 @@ interface WorkDetailWithRelations {
   }[];
 }
 
-const FinancialReportPage = async () => {
-  // Financial year dates (April 2024 - March 2025)
-  const fyStart = new Date("2024-04-01");
-  const fyEnd = new Date("2025-03-31");
+interface FinancialReportPageProps {
+  searchParams: Promise<{ 
+    financialYear?: string;
+    paymentPeriodMonths?: string;
+    schemes?: string;
+  }>;
+}
 
-  // Payment period (April 2024 - June 2025)
-  const paymentStart = new Date("2024-04-01");
-  const paymentEnd = new Date("2025-06-30");
+const FinancialReportPage = async ({ searchParams }: FinancialReportPageProps) => {
+  const params = await searchParams;
+  const financialYear = params.financialYear || getCurrentFinancialYear();
+  const paymentPeriodMonths = parseInt(params.paymentPeriodMonths || "3"); // Default 3 months after FY end
+  const selectedSchemes = params.schemes ? params.schemes.split(",").filter(Boolean) : [];
+
+  // Get financial year date range
+  const { financialYearStart, financialYearEnd } = getFinancialYearDateRange(financialYear);
+  const fyStart = financialYearStart;
+  const fyEnd = financialYearEnd;
+
+  // Payment period: Start from FY start, end after paymentPeriodMonths from FY end
+  const paymentStart = new Date(fyStart);
+  const paymentEnd = new Date(fyEnd);
+  paymentEnd.setMonth(paymentEnd.getMonth() + paymentPeriodMonths);
 
   const works = (await db.worksDetail.findMany({
     where: {
@@ -113,12 +132,8 @@ const FinancialReportPage = async () => {
 
   // Process data for the report
   const reportData = works.map((work, index) => {
-    // Determine source of fund based on scheme name
-    let sourceOfFund = "OSR";
-    const schemeName =
-      work.ApprovedActionPlanDetails?.schemeName?.toLowerCase() || "";
-    if (schemeName.includes("sfc")) sourceOfFund = "SFC";
-    else if (schemeName.includes("cfc")) sourceOfFund = "CFC";
+    // Use scheme name as source
+    const sourceOfFund = work.ApprovedActionPlanDetails?.schemeName || "N/A";
 
     // Get work activity name and description
     const workActivityName =
@@ -184,22 +199,43 @@ const FinancialReportPage = async () => {
     };
   });
 
-  // Calculate summary statistics
-  const totalWorkOrders = reportData.length;
-  const totalWorkOrderValue = reportData.reduce(
+  // Get unique scheme names for filter
+  const uniqueSchemes = Array.from(
+    new Set(
+      reportData
+        .map((item) => item.sourceOfFund)
+        .filter((scheme) => scheme && scheme !== "N/A")
+    )
+  ).sort();
+
+  // Filter by selected schemes if any are selected
+  const filteredReportData =
+    selectedSchemes.length > 0
+      ? reportData.filter((item) => selectedSchemes.includes(item.sourceOfFund))
+      : reportData;
+
+  // Update sequential numbers for filtered data
+  const filteredReportDataWithSequentialNumbers = filteredReportData.map((item, index) => ({
+    ...item,
+    slNo: index + 1,
+  }));
+
+  // Calculate summary statistics based on filtered data
+  const totalWorkOrders = filteredReportDataWithSequentialNumbers.length;
+  const totalWorkOrderValue = filteredReportDataWithSequentialNumbers.reduce(
     (sum, item) => sum + item.workOrderValue,
     0
   );
-  const totalPaymentsInPeriod = reportData.reduce(
+  const totalPaymentsInPeriod = filteredReportDataWithSequentialNumbers.reduce(
     (sum, item) => sum + item.paymentsInPeriod,
     0
   );
-  const periodOverPayments = reportData.filter(
+  const periodOverPayments = filteredReportDataWithSequentialNumbers.filter(
     (item) => item.paymentsAfterPeriod > 0
   ).length;
 
   // Calculate completion metrics
-  const worksWithCompletionDate = reportData.filter(
+  const worksWithCompletionDate = filteredReportDataWithSequentialNumbers.filter(
     (item) => item.completionDate !== null
   );
   const completedWithinPeriod = worksWithCompletionDate.filter(
@@ -236,29 +272,33 @@ const FinancialReportPage = async () => {
   };
 
   const getSourceBadge = (source: string) => {
-    const colors = {
-      SFC: "bg-blue-100 text-blue-800 border-blue-200",
-      CFC: "bg-purple-100 text-purple-800 border-purple-200",
-      OSR: "bg-orange-100 text-orange-800 border-orange-200",
-    };
+    // Generate a consistent color based on scheme name
+    const schemeNameLower = source.toLowerCase();
+    let colorClass = "bg-gray-100 text-gray-800 border-gray-200";
+    
+    if (schemeNameLower.includes("sfc")) {
+      colorClass = "bg-blue-100 text-blue-800 border-blue-200";
+    } else if (schemeNameLower.includes("cfc")) {
+      colorClass = "bg-purple-100 text-purple-800 border-purple-200";
+    } else if (schemeNameLower.includes("osr") || source === "N/A") {
+      colorClass = "bg-orange-100 text-orange-800 border-orange-200";
+    }
+    
     return (
-      <Badge
-        variant="outline"
-        className={colors[source as keyof typeof colors] || colors.OSR}
-      >
+      <Badge variant="outline" className={colorClass}>
         {source}
       </Badge>
     );
   };
 
   // Identify top 5 most valuable work orders
-  const top5Ids = [...reportData]
+  const top5Ids = [...filteredReportDataWithSequentialNumbers]
     .sort((a, b) => b.workOrderValue - a.workOrderValue)
     .slice(0, 7)
     .map((item) => item.id);
 
   // Create a map of high-value work orders (≥ ₹2.5 lakh) with their ranks
-  const highValueItems = [...reportData]
+  const highValueItems = [...filteredReportDataWithSequentialNumbers]
     .filter((item) => item.workOrderValue >= 250000)
     .sort((a, b) => b.workOrderValue - a.workOrderValue);
 
@@ -274,7 +314,7 @@ const FinancialReportPage = async () => {
 
   // Identify work orders that are both top 5 and incomplete
   const top5IncompleteIds = top5Ids.filter((id) => {
-    const item = reportData.find((item) => item.id === id);
+    const item = filteredReportDataWithSequentialNumbers.find((item) => item.id === id);
     return item && shouldHighlightRow(item);
   });
 
@@ -285,9 +325,21 @@ const FinancialReportPage = async () => {
           Work Order Financial Report
         </h1>
         <p className="text-muted-foreground">
-          Financial Year 2024-2025 • Payment Period: April 2024 - June 2025
+          Financial Year {financialYear} • Payment Period: {format(paymentStart, "MMM yyyy")} - {format(paymentEnd, "MMM yyyy")}
         </p>
       </div>
+
+      {/* Financial Year Selector */}
+      <Suspense fallback={<div className="p-4 bg-muted/50 rounded-lg">Loading...</div>}>
+        <FinancialYearSelector />
+      </Suspense>
+
+      {/* Scheme Filter */}
+      {uniqueSchemes.length > 0 && (
+        <Suspense fallback={<div className="p-4 bg-muted/50 rounded-lg">Loading...</div>}>
+          <SchemeFilter availableSchemes={uniqueSchemes} />
+        </Suspense>
+      )}
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -369,7 +421,7 @@ const FinancialReportPage = async () => {
         <CardHeader>
           <CardTitle>Work Order Details</CardTitle>
           <CardDescription>
-            Detailed breakdown of all work orders issued in FY 2024-25
+            Detailed breakdown of all work orders issued in FY {financialYear}
           </CardDescription>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
@@ -402,7 +454,12 @@ const FinancialReportPage = async () => {
         </CardHeader>
 
         <CardContent>
-          <ExportButton reportData={reportData} />
+          <ExportButton 
+            reportData={filteredReportDataWithSequentialNumbers} 
+            financialYear={financialYear}
+            paymentStart={paymentStart}
+            paymentEnd={paymentEnd}
+          />
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -418,7 +475,7 @@ const FinancialReportPage = async () => {
                   <TableHead>Issue Date</TableHead>
                   <TableHead className="text-right">Order Value</TableHead>
                   <TableHead className="text-right">
-                    Gross Bills (Apr 24-Jun 25)
+                    Gross Bills ({format(paymentStart, "MMM yy")}-{format(paymentEnd, "MMM yy")})
                   </TableHead>
                   <TableHead>Completion Date</TableHead>
                   <TableHead>Status</TableHead>
@@ -426,7 +483,7 @@ const FinancialReportPage = async () => {
               </TableHeader>
 
               <TableBody>
-                {reportData.map((item) => {
+                {filteredReportDataWithSequentialNumbers.map((item) => {
                   const isHighlighted = shouldHighlightRow(item);
                   const isHighValue = item.workOrderValue >= 250000;
                   const rank = highValueMap.get(item.id);

@@ -5,7 +5,7 @@ import { generatePDF } from "../pdfgenerator";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2, Printer } from "lucide-react";
-
+import { gpcode } from "@/constants/gpinfor";
 import { aoctype } from "@/types/aoc";
 import { formatDate } from "@/utils/utils";
 
@@ -65,13 +65,13 @@ export const Aocprint = ({ workdetails }: { workdetails: aoctype }) => {
           ? (((estimate - biddingamount) / estimate) * 100).toFixed(2) + "%"
           : "0%";
       // Build NIT string once for reuse
-      const nitString = `${workdetails.WorksDetail?.nitDetails.memoNumber}/DGP/${year} Dated: ${formattedDate}`;
+      const nitString = `${workdetails.WorksDetail?.nitDetails.memoNumber}/${gpcode}/${year} Dated: ${formattedDate}`;
 
       const inputs = [
         {
           memo_number: `${
             workdetails.aocmenonumber
-          }/DGP/${workdetails.aocordeermemodate.getFullYear()}`,
+          }/${gpcode}/${workdetails.aocordeermemodate.getFullYear()}`,
           contract_date: formatDate(workdetails.aocordeermemodate),
           awardofcontile: `NIT No: ${nitString}, Work Sl. No.: ${workdetails.WorksDetail?.workslno}`,
           contractor_name: agencydetails?.name || "Unknown Contractor",

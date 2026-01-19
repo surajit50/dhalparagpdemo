@@ -6,7 +6,7 @@ import { paymentdetailsProps } from "@/types/paymentDetail";
 import { ShowNitDetails } from "@/components/ShowNitDetails";
 import PaymentCertificate from "@/components/PrintTemplet/payment-certificate";
 import { formatDate } from "@/utils/utils";
-
+import { blockname, gpcode, gpname, nameinprodhan, gpaddress } from "@/constants/gpinfor";
 export const columns: ColumnDef<paymentdetailsProps>[] = [
   {
     accessorFn: (row) => row.id,

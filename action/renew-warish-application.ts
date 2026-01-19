@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-
+import { gpcode } from "@/constants/gpinfor";
 export async function getLatestMemoNumber(year: number): Promise<number> {
   if (year < 1900 || year > 9999 || !Number.isInteger(year)) {
     throw new Error("Invalid year: must be a 4-digit integer between 1900 and 9999");
@@ -37,7 +37,7 @@ export async function renewWarishApplication(id: string) {
 
       const newWarishRefNo = `${newMemoNumber
         .toString()
-        .padStart(3, "0")}/DGP/(LH)/${currentYear}`;
+        .padStart(3, "0")}/${gpcode}/(LH)/${currentYear}`;
 
       const renewdate = new Date(today);
       renewdate.setMonth(renewdate.getMonth() + 6);

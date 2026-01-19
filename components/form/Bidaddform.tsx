@@ -1,21 +1,48 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { useState, useTransition, useEffect } from "react"
-import { Loader2, FileText, Building, AlertCircle, CheckCircle2, Percent, ArrowDown, ArrowUp } from "lucide-react"
-import type { workdetailfinanicalProps } from "@/types"
-import { addFinancialDetails } from "@/action/aoc"
-import { FaRupeeSign } from "react-icons/fa"
-import { useRouter } from "next/navigation"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Progress } from "@/components/ui/progress"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useState, useTransition, useEffect } from "react";
+import {
+  Loader2,
+  FileText,
+  Building,
+  AlertCircle,
+  CheckCircle2,
+  Percent,
+  ArrowDown,
+  ArrowUp,
+} from "lucide-react";
+import type { workdetailfinanicalProps } from "@/types";
+import { addFinancialDetails } from "@/action/aoc";
+import { FaRupeeSign } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -23,127 +50,175 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-
+} from "@/components/ui/dialog";
+import { gpcode } from "@/constants/gpinfor";
 const bidSchema = z.object({
   bids: z.array(
     z.object({
       agencyId: z.string(),
-      lessPercentage: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, {
-        message: "Must be between 0-100",
-      }),
-      bidAmount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-        message: "Must be positive",
-      }),
-    }),
+      lessPercentage: z
+        .string()
+        .refine(
+          (val) =>
+            !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100,
+          {
+            message: "Must be between 0-100",
+          }
+        ),
+      bidAmount: z
+        .string()
+        .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+          message: "Must be positive",
+        }),
+    })
   ),
-})
+});
 
-type BidFormValues = z.infer<typeof bidSchema>
+type BidFormValues = z.infer<typeof bidSchema>;
 
-export default function FinancialBidDetails({ work }: { work: workdetailfinanicalProps }) {
-  const router = useRouter()
-  const [error, setError] = useState<string | undefined>("")
-  const [success, setSuccess] = useState<string | undefined>("")
-  const [isPending, startTransition] = useTransition()
-  const [localWork, setLocalWork] = useState(work)
-  const [showConfirmation, setShowConfirmation] = useState(false)
-  const [submissionData, setSubmissionData] = useState<BidFormValues | null>(null)
+export default function FinancialBidDetails({
+  work,
+}: {
+  work: workdetailfinanicalProps;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
+  const [isPending, startTransition] = useTransition();
+  const [localWork, setLocalWork] = useState(work);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [submissionData, setSubmissionData] = useState<BidFormValues | null>(
+    null
+  );
 
   useEffect(() => {
-    setLocalWork(work)
-  }, [work])
+    setLocalWork(work);
+  }, [work]);
 
   const form = useForm<BidFormValues>({
     resolver: zodResolver(bidSchema),
     defaultValues: {
       bids: localWork.biddingAgencies.map((agency) => {
-        const hasPrevious = agency.biddingAmount != null
-        const previousBidAmount = hasPrevious ? Number(agency.biddingAmount) : undefined
+        const hasPrevious = agency.biddingAmount != null;
+        const previousBidAmount = hasPrevious
+          ? Number(agency.biddingAmount)
+          : undefined;
         const previousDiscount = hasPrevious
-          ? (((localWork.finalEstimateAmount - Number(previousBidAmount)) / localWork.finalEstimateAmount) * 100).toFixed(2)
-          : ""
+          ? (
+              ((localWork.finalEstimateAmount - Number(previousBidAmount)) /
+                localWork.finalEstimateAmount) *
+              100
+            ).toFixed(2)
+          : "";
 
         return {
           agencyId: agency.id,
           lessPercentage: previousDiscount || "",
           bidAmount: hasPrevious ? String(previousBidAmount?.toFixed(2)) : "",
-        }
+        };
       }),
     },
-  })
+  });
 
   const onSubmit = async (data: BidFormValues) => {
-    setSubmissionData(data)
-    setShowConfirmation(true)
-  }
+    setSubmissionData(data);
+    setShowConfirmation(true);
+  };
 
   const confirmSubmission = async () => {
-    if (!submissionData) return
-    
-    setError(undefined)
-    setSuccess(undefined)
-    setShowConfirmation(false)
-    
+    if (!submissionData) return;
+
+    setError(undefined);
+    setSuccess(undefined);
+    setShowConfirmation(false);
+
     startTransition(() => {
-      Promise.all(submissionData.bids.map((bid) => addFinancialDetails(bid.agencyId, bid.bidAmount, localWork.id)))
-        .then((results) => {
-          const errors = results.filter((r) => r?.error).map((r) => r?.error)
-          if (errors.length) {
-            setError(errors.join(". "))
-          } else {
-            setLocalWork(prev => ({
-              ...prev,
-              biddingAgencies: prev.biddingAgencies.map(agency => {
-                const submittedBid = submissionData.bids.find(bid => bid.agencyId === agency.id)
-                if (submittedBid) {
-                  return { ...agency, biddingAmount: Number(submittedBid.bidAmount) }
-                }
-                return agency
-              })
-            }))
-            setSuccess("All bids submitted successfully")
-            router.push("/admindashboard/manage-tender/addfinanicaldetails")
-          }
-        })
-    })
-  }
+      Promise.all(
+        submissionData.bids.map((bid) =>
+          addFinancialDetails(bid.agencyId, bid.bidAmount, localWork.id)
+        )
+      ).then((results) => {
+        const errors = results.filter((r) => r?.error).map((r) => r?.error);
+        if (errors.length) {
+          setError(errors.join(". "));
+        } else {
+          setLocalWork((prev) => ({
+            ...prev,
+            biddingAgencies: prev.biddingAgencies.map((agency) => {
+              const submittedBid = submissionData.bids.find(
+                (bid) => bid.agencyId === agency.id
+              );
+              if (submittedBid) {
+                return {
+                  ...agency,
+                  biddingAmount: Number(submittedBid.bidAmount),
+                };
+              }
+              return agency;
+            }),
+          }));
+          setSuccess("All bids submitted successfully");
+          router.push("/admindashboard/manage-tender/addfinanicaldetails");
+        }
+      });
+    });
+  };
 
   const calculateBidAmount = (index: number, lessPercentage: string) => {
-    const percentage = Number.parseFloat(lessPercentage)
+    const percentage = Number.parseFloat(lessPercentage);
     if (!isNaN(percentage)) {
-      const bidAmount = localWork.finalEstimateAmount * (1 - percentage / 100)
-      form.setValue(`bids.${index}.bidAmount`, bidAmount.toFixed(2))
+      const bidAmount = localWork.finalEstimateAmount * (1 - percentage / 100);
+      form.setValue(`bids.${index}.bidAmount`, bidAmount.toFixed(2));
     }
-  }
+  };
 
-  const allBidsEntered = !localWork.biddingAgencies.some((bit) => bit.biddingAmount == null)
+  const allBidsEntered = !localWork.biddingAgencies.some(
+    (bit) => bit.biddingAmount == null
+  );
 
   const calculateLowestBid = () => {
-    const bids = submissionData?.bids || form.getValues().bids
-    const validBids = bids.filter((bid) => !isNaN(Number.parseFloat(bid.bidAmount)) && Number.parseFloat(bid.bidAmount) > 0)
-    if (validBids.length === 0) return null
+    const bids = submissionData?.bids || form.getValues().bids;
+    const validBids = bids.filter(
+      (bid) =>
+        !isNaN(Number.parseFloat(bid.bidAmount)) &&
+        Number.parseFloat(bid.bidAmount) > 0
+    );
+    if (validBids.length === 0) return null;
 
     const lowestBid = validBids.reduce((lowest, current) => {
-      return Number.parseFloat(current.bidAmount) < Number.parseFloat(lowest.bidAmount) ? current : lowest
-    })
+      return Number.parseFloat(current.bidAmount) <
+        Number.parseFloat(lowest.bidAmount)
+        ? current
+        : lowest;
+    });
 
-    const lowestBidAgency = localWork.biddingAgencies.find((agency) => agency.id === lowestBid.agencyId)
+    const lowestBidAgency = localWork.biddingAgencies.find(
+      (agency) => agency.id === lowestBid.agencyId
+    );
     return {
       agencyName: lowestBidAgency?.agencydetails.name || "Unknown",
       amount: Number.parseFloat(lowestBid.bidAmount),
-      percentage: ((Number.parseFloat(lowestBid.bidAmount) / localWork.finalEstimateAmount - 1) * -100).toFixed(2)
-    }
-  }
+      percentage: (
+        (Number.parseFloat(lowestBid.bidAmount) /
+          localWork.finalEstimateAmount -
+          1) *
+        -100
+      ).toFixed(2),
+    };
+  };
 
   const calculateBidCompletion = () => {
-    const completedBids = form.getValues().bids.filter(bid => 
-      !isNaN(Number.parseFloat(bid.bidAmount)) && Number.parseFloat(bid.bidAmount) > 0
-    ).length
-    return (completedBids / localWork.biddingAgencies.length) * 100
-  }
+    const completedBids = form
+      .getValues()
+      .bids.filter(
+        (bid) =>
+          !isNaN(Number.parseFloat(bid.bidAmount)) &&
+          Number.parseFloat(bid.bidAmount) > 0
+      ).length;
+    return (completedBids / localWork.biddingAgencies.length) * 100;
+  };
 
-  const lowestBid = calculateLowestBid()
+  const lowestBid = calculateLowestBid();
 
   if (!localWork) {
     return (
@@ -156,11 +231,13 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-muted-foreground">The requested work details could not be found.</p>
+            <p className="text-center text-muted-foreground">
+              The requested work details could not be found.
+            </p>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -194,7 +271,7 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
             </CardDescription>
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-4 sm:pt-6">
           <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-xl shadow-sm">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
@@ -203,7 +280,7 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                   <FileText className="mr-2 h-4 w-4" /> Memo Number
                 </p>
                 <p className="font-semibold text-lg text-foreground">
-                  {localWork.nitDetails.memoNumber}/DGP/2024
+                  {localWork.nitDetails.memoNumber}/${gpcode}/2024
                 </p>
               </div>
               <div className="space-y-1">
@@ -229,13 +306,20 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
             <div className="text-center py-8 sm:py-10 space-y-4 sm:space-y-6 bg-green-50 rounded-xl border border-green-200">
               <CheckCircle2 className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-green-500" />
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-green-800">All Bids Submitted</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-green-800">
+                  All Bids Submitted
+                </h3>
                 <p className="text-muted-foreground mt-2 max-w-md mx-auto text-sm sm:text-base">
-                  Financial bids have been successfully recorded for all participating agencies.
+                  Financial bids have been successfully recorded for all
+                  participating agencies.
                 </p>
               </div>
-              <Button 
-                onClick={() => router.push("/admindashboard/manage-tender/addfinanicaldetails")}
+              <Button
+                onClick={() =>
+                  router.push(
+                    "/admindashboard/manage-tender/addfinanicaldetails"
+                  )
+                }
                 className="mt-2 sm:mt-4 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
               >
                 Return to Dashboard
@@ -245,35 +329,66 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
             <>
               <div className="mb-4 sm:mb-6">
                 <div className="flex justify-between items-center mb-1 sm:mb-2">
-                  <h3 className="font-medium text-foreground text-sm sm:text-base">Bid Completion</h3>
+                  <h3 className="font-medium text-foreground text-sm sm:text-base">
+                    Bid Completion
+                  </h3>
                   <span className="text-sm font-medium text-primary">
                     {Math.round(calculateBidCompletion())}%
                   </span>
                 </div>
-                <Progress value={calculateBidCompletion()} className="h-2 sm:h-3" />
+                <Progress
+                  value={calculateBidCompletion()}
+                  className="h-2 sm:h-3"
+                />
               </div>
-              
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <div className="rounded-lg border shadow-sm overflow-x-auto">
                   <Table className="min-w-[700px] sm:min-w-full">
                     <TableHeader className="bg-gray-50">
                       <TableRow>
-                        <TableHead className="w-[150px] sm:w-[30%] font-semibold text-gray-700">Agency</TableHead>
-                        <TableHead className="w-[100px] sm:w-[20%] font-semibold text-gray-700">Discount %</TableHead>
-                        <TableHead className="w-[120px] sm:w-[20%] font-semibold text-gray-700">Bid Amount</TableHead>
-                        <TableHead className="w-[100px] sm:w-[20%] font-semibold text-gray-700">Savings</TableHead>
-                        <TableHead className="w-[60px] sm:w-[10%] font-semibold text-gray-700 text-center">Status</TableHead>
+                        <TableHead className="w-[150px] sm:w-[30%] font-semibold text-gray-700">
+                          Agency
+                        </TableHead>
+                        <TableHead className="w-[100px] sm:w-[20%] font-semibold text-gray-700">
+                          Discount %
+                        </TableHead>
+                        <TableHead className="w-[120px] sm:w-[20%] font-semibold text-gray-700">
+                          Bid Amount
+                        </TableHead>
+                        <TableHead className="w-[100px] sm:w-[20%] font-semibold text-gray-700">
+                          Savings
+                        </TableHead>
+                        <TableHead className="w-[60px] sm:w-[10%] font-semibold text-gray-700 text-center">
+                          Status
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {localWork.biddingAgencies.map((agency, index) => {
-                        const bidAmount = Number.parseFloat(form.watch(`bids.${index}.bidAmount`))
-                        const lessValue = localWork.finalEstimateAmount - (isNaN(bidAmount) ? 0 : bidAmount)
-                        const isBidValid = !isNaN(bidAmount) && bidAmount > 0
-                        const isLowest = lowestBid && lowestBid.agencyName === agency.agencydetails.name
+                        const bidAmount = Number.parseFloat(
+                          form.watch(`bids.${index}.bidAmount`)
+                        );
+                        const lessValue =
+                          localWork.finalEstimateAmount -
+                          (isNaN(bidAmount) ? 0 : bidAmount);
+                        const isBidValid = !isNaN(bidAmount) && bidAmount > 0;
+                        const isLowest =
+                          lowestBid &&
+                          lowestBid.agencyName === agency.agencydetails.name;
 
                         return (
-                          <TableRow key={agency.id} className={isLowest ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-muted/10"}>
+                          <TableRow
+                            key={agency.id}
+                            className={
+                              isLowest
+                                ? "bg-blue-50 hover:bg-blue-100"
+                                : "hover:bg-muted/10"
+                            }
+                          >
                             <TableCell className="font-medium py-2 sm:py-4">
                               <div className="flex items-center space-x-2 sm:space-x-3">
                                 <Building className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" />
@@ -288,22 +403,38 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                                 <Input
                                   type="text"
                                   placeholder="0.00"
-                                  {...form.register(`bids.${index}.lessPercentage`)}
+                                  {...form.register(
+                                    `bids.${index}.lessPercentage`
+                                  )}
                                   onChange={(e) => {
-                                    form.setValue(`bids.${index}.lessPercentage`, e.target.value)
-                                    calculateBidAmount(index, e.target.value)
+                                    form.setValue(
+                                      `bids.${index}.lessPercentage`,
+                                      e.target.value
+                                    );
+                                    calculateBidAmount(index, e.target.value);
                                   }}
                                   className="pl-7 h-9 sm:h-10 text-sm"
                                 />
                               </div>
                               {agency.biddingAmount != null && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  Previous discount: {(((localWork.finalEstimateAmount - Number(agency.biddingAmount)) / localWork.finalEstimateAmount) * 100).toFixed(2)}%
+                                  Previous discount:{" "}
+                                  {(
+                                    ((localWork.finalEstimateAmount -
+                                      Number(agency.biddingAmount)) /
+                                      localWork.finalEstimateAmount) *
+                                    100
+                                  ).toFixed(2)}
+                                  %
                                 </p>
                               )}
-                              {form.formState.errors.bids?.[index]?.lessPercentage && (
+                              {form.formState.errors.bids?.[index]
+                                ?.lessPercentage && (
                                 <p className="text-xs text-destructive mt-1">
-                                  {form.formState.errors.bids[index]?.lessPercentage?.message}
+                                  {
+                                    form.formState.errors.bids[index]
+                                      ?.lessPercentage?.message
+                                  }
                                 </p>
                               )}
                             </TableCell>
@@ -319,12 +450,19 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                               </div>
                               {agency.biddingAmount != null && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  Previous: ₹{Number(agency.biddingAmount).toLocaleString("en-IN")}
+                                  Previous: ₹
+                                  {Number(agency.biddingAmount).toLocaleString(
+                                    "en-IN"
+                                  )}
                                 </p>
                               )}
-                              {form.formState.errors.bids?.[index]?.bidAmount && (
+                              {form.formState.errors.bids?.[index]
+                                ?.bidAmount && (
                                 <p className="text-xs text-destructive mt-1">
-                                  {form.formState.errors.bids[index]?.bidAmount?.message}
+                                  {
+                                    form.formState.errors.bids[index]?.bidAmount
+                                      ?.message
+                                  }
                                 </p>
                               )}
                             </TableCell>
@@ -335,7 +473,13 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                                 ) : (
                                   <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 mr-1" />
                                 )}
-                                <span className={`font-medium text-sm sm:text-base ${lessValue > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                <span
+                                  className={`font-medium text-sm sm:text-base ${
+                                    lessValue > 0
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
                                   ₹{Math.abs(lessValue).toLocaleString("en-IN")}
                                 </span>
                               </div>
@@ -357,7 +501,7 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                               </TooltipProvider>
                             </TableCell>
                           </TableRow>
-                        )
+                        );
                       })}
                     </TableBody>
                   </Table>
@@ -375,9 +519,12 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                             Current Lowest Bidder
                           </h4>
                           <p className="text-blue-700 text-xs sm:text-sm truncate">
-                            <span className="font-semibold">{lowestBid.agencyName}</span>
+                            <span className="font-semibold">
+                              {lowestBid.agencyName}
+                            </span>
                             <span className="block sm:inline">
-                              {" "}₹{lowestBid.amount.toLocaleString("en-IN")}
+                              {" "}
+                              ₹{lowestBid.amount.toLocaleString("en-IN")}
                               <span className="ml-1 bg-blue-200 px-1.5 py-0.5 rounded-full text-xs">
                                 {lowestBid.percentage}% discount
                               </span>
@@ -387,18 +534,20 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                       </CardContent>
                     </Card>
                   )}
-                  
+
                   <div className="flex justify-end">
                     <Button
                       type="submit"
                       size="lg"
                       disabled={
-                        isPending || 
-                        form.getValues().bids.some(
-                          (bid) => 
-                            isNaN(Number.parseFloat(bid.bidAmount)) || 
-                            Number.parseFloat(bid.bidAmount) <= 0
-                        )
+                        isPending ||
+                        form
+                          .getValues()
+                          .bids.some(
+                            (bid) =>
+                              isNaN(Number.parseFloat(bid.bidAmount)) ||
+                              Number.parseFloat(bid.bidAmount) <= 0
+                          )
                       }
                       className="w-full sm:w-auto shadow-md text-sm sm:text-base"
                     >
@@ -427,20 +576,25 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
               Confirm Bid Submission
             </DialogTitle>
             <DialogDescription className="pt-3 sm:pt-4 text-sm sm:text-base">
-              You are about to submit financial bids for all agencies. This action cannot be undone.
+              You are about to submit financial bids for all agencies. This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-3 sm:py-4">
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Lowest Bidder:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">
+                Lowest Bidder:
+              </h4>
               {lowestBid ? (
                 <div className="flex items-center">
                   <div className="bg-blue-100 p-2 rounded-full mr-2 sm:mr-3">
                     <Building className="h-4 w-4 sm:h-5 sm:w-5 text-blue-700" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm sm:text-lg truncate">{lowestBid.agencyName}</p>
+                    <p className="font-bold text-sm sm:text-lg truncate">
+                      {lowestBid.agencyName}
+                    </p>
                     <p className="flex items-center flex-wrap gap-1">
                       <FaRupeeSign className="mr-1 text-green-600 text-sm sm:text-base" />
                       <span className="font-semibold text-green-700 text-sm sm:text-lg">
@@ -453,12 +607,16 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm sm:text-base">No valid bids to determine lowest bidder</p>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  No valid bids to determine lowest bidder
+                </p>
               )}
             </div>
 
             <div className="mt-3 sm:mt-4 bg-amber-50 rounded-lg p-3 border border-amber-200">
-              <h4 className="font-semibold text-amber-800 mb-2 text-sm sm:text-base">Important:</h4>
+              <h4 className="font-semibold text-amber-800 mb-2 text-sm sm:text-base">
+                Important:
+              </h4>
               <ul className="space-y-1 sm:space-y-2 text-amber-700 text-xs sm:text-sm">
                 <li className="flex items-start">
                   <span className="inline-block mr-1">•</span>
@@ -475,17 +633,17 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
               </ul>
             </div>
           </div>
-          
+
           <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowConfirmation(false)}
               disabled={isPending}
               className="w-full sm:w-auto"
             >
               Review Again
             </Button>
-            <Button 
+            <Button
               onClick={confirmSubmission}
               disabled={isPending}
               className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
@@ -495,11 +653,13 @@ export default function FinancialBidDetails({ work }: { work: workdetailfinanica
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Submitting...
                 </>
-              ) : "Confirm Submission"}
+              ) : (
+                "Confirm Submission"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

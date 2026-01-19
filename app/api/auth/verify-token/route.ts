@@ -1,6 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/jwt"
 
+
+
+
+
+
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

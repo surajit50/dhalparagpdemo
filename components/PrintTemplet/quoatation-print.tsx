@@ -6,7 +6,7 @@ import { useState } from "react";
 import { generatePDF } from "../pdfgenerator";
 import type { Prisma } from "@prisma/client";
 import { formatDate } from "@/utils/utils";
-
+import { gpcode } from "@/constants/gpinfor";
 // Use an existing template from public/templates
 const templatePath = "/templates/quotationformat.json";
 
@@ -87,7 +87,7 @@ export const QuoatationPrint = ({
               ? "NOTICE INVITING QUOTATION FOR SUPPLY"
               : "NOTICE INVITING QUOTATION FOR SALE OF ITEMS",
           field9: String(introText),
-          field6: `Memo No ${String(quotation.nitNo ?? "")}/DGP/2025`,
+          field6: `Memo No ${String(quotation.nitNo ?? "")}/${gpcode}/2025`,
           field7: `Date ${nitDateText}`,
           field11: [
             [

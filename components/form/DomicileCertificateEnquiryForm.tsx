@@ -259,7 +259,7 @@ export default function DomicileCertificateEnquiryForm({ onSubmitted }: Domicile
   useEffect(() => {
     const subscription = form.watch(() => setFormErrors([]))
     return () => subscription.unsubscribe()
-  }, [form.watch])
+  }, [form])
 
   // Handle step navigation with validation
   const goToNextStep = async () => {
@@ -415,7 +415,7 @@ export default function DomicileCertificateEnquiryForm({ onSubmitted }: Domicile
                           Memo Number <span className="text-red-500 ml-1">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., 141/DGP/2025" {...field} className="bg-gray-50" />
+                          <Input placeholder="e.g., 141/${gpcode}/2025" {...field} className="bg-gray-50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

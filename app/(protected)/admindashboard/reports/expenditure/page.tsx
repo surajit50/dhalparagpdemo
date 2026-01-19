@@ -15,7 +15,7 @@ import {
   getFinancialYearDateRange,
 } from "@/utils/financialYear";
 import { FinancialYearSelector } from "../_components/financial-year-selector";
-
+import { gpcode } from "@/constants/gpinfor";
 export default async function AdminExpenditureReportPage({
   searchParams,
 }: {
@@ -468,7 +468,8 @@ export default async function AdminExpenditureReportPage({
                             ?.activityName || "Work Details"}
                           {/* nitdetails */}
                           <p>Nit Details</p>
-                          {payment.WorksDetail?.nitDetails.memoNumber || 0}/DGP/
+                          {payment.WorksDetail?.nitDetails.memoNumber || 0}/$
+                          {gpcode}/
                           {payment.WorksDetail?.nitDetails.memoDate.getFullYear()}{" "}
                           sl no {payment.WorksDetail?.workslno}
                         </CardDescription>

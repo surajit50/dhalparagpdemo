@@ -1,235 +1,237 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "@/components/ui/use-toast";
+import { generatePDF } from "@/components/pdfgenerator";
 import { formatDate } from "@/utils/utils";
+import { gpname, gpcode } from "@/constants/gpinfor";
+
+type PrayerType =
+  | "BILL_PRAYER"
+  | "EMD_REFUND"
+  | "SECURITY_MONEY_RELEASE"
+  | "OTHER_PRAYER";
+
+const getTemplatePath = (prayerType: PrayerType): string => {
+  switch (prayerType) {
+    case "SECURITY_MONEY_RELEASE":
+      return "/templates/security-release-prayer.json";
+    case "EMD_REFUND":
+      return "/templates/emd-refund-prayer.json";
+    case "BILL_PRAYER":
+    default:
+      return "/templates/printprayer.json";
+  }
+};
+
+const PRAYER_TYPE_LABELS: Record<PrayerType, string> = {
+  BILL_PRAYER: "Print Bill Prayer",
+  EMD_REFUND: "Print EMD Refund Prayer",
+  SECURITY_MONEY_RELEASE: "Print Security Money Release Prayer",
+  OTHER_PRAYER: "Print Other Prayer",
+};
 
 interface PrintPrayerDocumentProps {
-  financialYear: string;
-  nitDetails: string;
-  workSlNo: number;
+  prayerType: PrayerType;
+  workName: string;
+  nitNumber: string;
+  nitDate: Date | string;
+  workSlNo: number | string;
   contractorName: string;
   contractorAddress: string;
-  workName: string;
-  earnestMoneyAmount: number;
-  earnestMoneyStatus: string;
-  securityDepositAmount: number;
-  securityDepositStatus: string;
+  workOrderNumber: string;
+  workOrderDate: Date | string;
+  completionDate: Date | null;
+  securityDepositAmount: number | null;
+
+  emdAmount: number | null;
 }
 
 export default function PrintPrayerDocument({
-  financialYear,
-  nitDetails,
+  prayerType,
+  workName,
+  nitNumber,
+  nitDate,
   workSlNo,
   contractorName,
   contractorAddress,
-  workName,
-  earnestMoneyAmount,
-  earnestMoneyStatus,
+  workOrderNumber,
+  workOrderDate,
+  completionDate,
   securityDepositAmount,
-  securityDepositStatus,
+  emdAmount,
 }: PrintPrayerDocumentProps) {
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const handleToggleItem = (item: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-    );
+  const handleGeneratePDF = async () => {
+    setIsGenerating(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // Format dates
+      const nitDateObj =
+        typeof nitDate === "string" ? new Date(nitDate) : nitDate;
+      const workOrderDateObj =
+        typeof workOrderDate === "string"
+          ? new Date(workOrderDate)
+          : workOrderDate;
+
+      const nitDateFormatted = formatDate(nitDateObj);
+      const workOrderDateFormatted = formatDate(workOrderDateObj);
+      const currentDateFormatted = formatDate(new Date());
+      const emdAmountFormatted = emdAmount ? emdAmount.toFixed(2) : "0.00";
+      // Format NIT details
+      const nitDetails = `${nitNumber}/${nitDateObj.getFullYear()}`;
+      const paragraph2 = `in NIT No ${nitDetails} dated ${nitDateFormatted} for Work Order No ${workOrderNumber} dated ${workOrderDateFormatted} (Work Sl. No: ${workSlNo.toString()}) for the work "${workName}".`;
+      const paragraph3 = `was deposited for participation in NIT No ${nitDetails} dated ${nitDateFormatted} for Work Order No ${workOrderNumber} dated ${workOrderDateFormatted} (Work Sl. No: ${workSlNo.toString()}). As per the terms and conditions, I am now eligible for the refund of the earnest money deposit amount.`;
+
+      const securityamount = securityDepositAmount;
+
+      // Get template path based on prayer type
+      const templatePath = getTemplatePath(prayerType);
+
+      // Prepare input data based on prayer type
+      let inputs: any[];
+
+      if (prayerType === "SECURITY_MONEY_RELEASE") {
+        // For security release prayer, use current date as completion date (or work order date as fallback)
+
+        inputs = [
+          {
+            gpname: gpname,
+            gp_name: gpname,
+            subject_label: `Subject: Request for Release of Security Deposit for the NIT NO ${nitDetails} Work Sl no ${workSlNo}`,
+            work_name: workName,
+            workOrderNumber: workOrderNumber,
+            workOrderDate: workOrderDateFormatted,
+            workSlNo: workSlNo.toString(),
+            workName: workName,
+            completion_date: completionDate
+              ? formatDate(completionDate)
+              : "N/A",
+            contractorName: contractorName,
+            contractorAddress: contractorAddress || "N/A",
+            contractor_name: contractorName,
+            contractor_address: contractorAddress || "N/A",
+            completionDate: completionDate ? formatDate(completionDate) : "N/A",
+          },
+        ];
+      } else if (prayerType === "EMD_REFUND") {
+        // For EMD refund prayer
+        inputs = [
+          {
+            gpname: gpname,
+            gp_name: gpname,
+            nit_details_subject: nitDetails,
+            work_sl_no: workSlNo.toString(),
+            work_name: workName,
+            paragraph2_continued: paragraph3,
+            emd_amount: `₹ ${emdAmountFormatted}`,
+            contractor_name: contractorName,
+            contractor_address: contractorAddress || "N/A",
+            date: currentDateFormatted,
+          },
+        ];
+      } else {
+        // For bill prayer and other types
+        inputs = [
+          {
+            gpname: gpname,
+            gp_name: gpname,
+            nitDetails: nitDetails,
+            nitDate: nitDateFormatted,
+            workOrderNumber: workOrderNumber,
+            workOrderDate: workOrderDateFormatted,
+            workSlNo: workSlNo.toString(),
+            workName: workName,
+            contractorName: contractorName,
+            contractorAddress: contractorAddress || "N/A",
+            contractor_name: contractorName,
+            contractor_address: contractorAddress || "N/A",
+            paragraph2: paragraph2,
+          },
+        ];
+      }
+
+      const pdf = await generatePDF(templatePath, inputs);
+
+      // Handle PDF buffer properly
+      const pdfBuffer = pdf instanceof Uint8Array ? pdf : (pdf as any).buffer;
+      const buffer =
+        pdfBuffer instanceof ArrayBuffer
+          ? new Uint8Array(pdfBuffer)
+          : pdfBuffer instanceof Uint8Array
+          ? pdfBuffer
+          : new Uint8Array(pdfBuffer as any);
+
+      const blob = new Blob([buffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${workOrderNumber}-${new Date()
+        .toISOString()
+        .replace(/[:.]/g, "-")},.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccess(true);
+      toast({
+        title: "Success",
+        description: "Print Prayer PDF generated successfully",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error in PDF generation:", error);
+      let errorMessage = "An unknown error occurred while generating the PDF.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("value.split is not a function")) {
+          errorMessage =
+            "Error processing text data. Please check the input values and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const prayerItems = [
-    { id: "bill-prayer", label: "Print Bill Prayer" },
-    { id: "earnest-refund", label: "Earnest Money Refund" },
-    { id: "security-deposit", label: "Security Deposit Refund" },
-    { id: "work-order", label: "Work Order Copy" },
-    { id: "payment-certificate", label: "Payment Certificate" },
-    { id: "completion-certificate", label: "Completion Certificate" },
-  ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Print Controls */}
-      <div className="print:hidden bg-muted/40 py-4 sticky top-0 z-10 border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Button variant="outline" onClick={() => window.history.back()}>
-              ← Back
-            </Button>
-            <Button onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print Document
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Printable Document */}
-      <div className="container mx-auto p-8 max-w-4xl">
-        <div className="bg-white border-2 border-gray-800 p-8 print:p-12 space-y-6">
-          {/* Header */}
-          <div className="text-center border-b-2 border-gray-800 pb-4">
-            <h1 className="text-3xl font-bold uppercase mb-2">
-              Print Prayer Document
-            </h1>
-            <p className="text-sm text-gray-600">Dhalpara Gram Panchayat</p>
-          </div>
-
-          {/* Financial Year */}
-          <div className="border border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-bold text-lg">Financial Year:</span>
-              <span className="text-lg">{financialYear}</span>
-            </div>
-          </div>
-
-          {/* NIT Details */}
-          <div className="border border-gray-800 p-4">
-            <div className="mb-2">
-              <span className="font-bold text-lg">NIT Details:</span>
-            </div>
-            <div className="ml-4">
-              <p className="text-base">{nitDetails}</p>
-            </div>
-          </div>
-
-          {/* Work SL No */}
-          <div className="border border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-bold text-lg">Work SL No:</span>
-              <span className="text-lg">{workSlNo.toFixed()}</span>
-            </div>
-          </div>
-
-          {/* Contractor Details */}
-          <div className="border border-gray-800 p-4">
-            <div className="mb-2">
-              <span className="font-bold text-lg">Contractor Name:</span>
-            </div>
-            <div className="ml-4 mb-2">
-              <p className="text-base">{contractorName}</p>
-            </div>
-            <div className="mb-2">
-              <span className="font-bold text-lg">Contractor Address:</span>
-            </div>
-            <div className="ml-4">
-              <p className="text-base">{contractorAddress}</p>
-            </div>
-          </div>
-
-          {/* Work Name */}
-          <div className="border border-gray-800 p-4">
-            <div className="mb-2">
-              <span className="font-bold text-lg">Name of Work:</span>
-            </div>
-            <div className="ml-4">
-              <p className="text-base">{workName}</p>
-            </div>
-          </div>
-
-          {/* Prayer Items - Checkboxes */}
-          <div className="border-2 border-gray-800 p-4 mt-6">
-            <div className="mb-4">
-              <span className="font-bold text-lg">
-                Please select the required documents:
-              </span>
-            </div>
-            <div className="space-y-3 ml-4">
-              {prayerItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => handleToggleItem(item.id)}
-                >
-                  <div className="w-6 h-6 border-2 border-gray-800 flex items-center justify-center print:border-gray-900">
-                    {selectedItems.includes(item.id) && (
-                      <div className="w-4 h-4 bg-black print:bg-black" />
-                    )}
-                  </div>
-                  <span className="text-base font-medium">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="border border-gray-800 p-4 mt-6">
-            <div className="mb-2">
-              <span className="font-bold text-lg">Additional Information:</span>
-            </div>
-            <div className="space-y-2 ml-4 text-sm">
-              {earnestMoneyAmount > 0 && (
-                <p>
-                  <span className="font-semibold">Earnest Money:</span> ₹
-                  {earnestMoneyAmount.toLocaleString("en-IN")} (Status:{" "}
-                  {earnestMoneyStatus})
-                </p>
-              )}
-              {securityDepositAmount > 0 && (
-                <p>
-                  <span className="font-semibold">Security Deposit:</span> ₹
-                  {securityDepositAmount.toLocaleString("en-IN")} (Status:{" "}
-                  {securityDepositStatus})
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Signature Section */}
-          <div className="mt-12 pt-8 border-t-2 border-gray-800">
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <div className="border-t-2 border-gray-800 pt-2 mt-16">
-                  <p className="text-center font-semibold">
-                    Contractor Signature
-                  </p>
-                </div>
-              </div>
-              <div>
-                <div className="border-t-2 border-gray-800 pt-2 mt-16">
-                  <p className="text-center font-semibold">
-                    Authorized Signatory
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Date */}
-          <div className="mt-6 text-right">
-            <p className="text-sm">Date: {formatDate(new Date())}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          .print\\:p-12 {
-            padding: 3rem !important;
-          }
-          .print\\:border-gray-900 {
-            border-color: #000 !important;
-          }
-          .print\\:bg-black {
-            background-color: #000 !important;
-          }
-          @page {
-            margin: 1cm;
-            size: A4;
-          }
-        }
-      `}</style>
+    <div>
+      <Button
+        onClick={handleGeneratePDF}
+        disabled={isGenerating}
+        variant="default"
+        className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"
+        aria-busy={isGenerating}
+      >
+        {isGenerating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Download className="mr-2 h-4 w-4" />
+            {PRAYER_TYPE_LABELS[prayerType] || "Print Prayer"}
+          </>
+        )}
+      </Button>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { generatePDF } from "../pdfgeneratortwo";
 import { fetchnitdetailsType } from "@/types/nitDetails";
 import { formatDate, formatDateTimeCustom } from "@/utils/utils";
 import { tenderForwardedTo, tendertermcon } from "@/constants/tenderterm";
-
+import { gpcode } from "@/constants/gpinfor";
 // Type definitions
 type TermCategory = "ELIGIBLE" | "QUALIFICATION_CRITERIA" | "TERMS_CONDITIONS";
 
@@ -54,7 +54,7 @@ interface PDFInput {
 
 const TEMPLATE_PATH = "/templates/nitsamplecopy.json";
 const EARNEST_MONEY_RATE = 0.02;
-const PERFORMANCE_SECURITY_RATE = 0.6;
+
 const DEFAULT_VALIDITY_DAYS = "120 days";
 const DEFAULT_COMPLETION_DAYS = "30 days";
 
@@ -66,7 +66,9 @@ export const NITCopy = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [tenderTerms, setTenderTerms] = useState<TenderTerm[]>([]);
   const [isLoadingTerms, setIsLoadingTerms] = useState(true);
-  const [selectedTemplates, setSelectedTemplates] = useState<TenderTermTemplate[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<
+    TenderTermTemplate[]
+  >([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,12 +83,15 @@ export const NITCopy = ({
       try {
         const response = await fetch("/api/tender-terms");
         if (!response.ok) {
-          throw new Error(`Failed to fetch tender terms: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch tender terms: ${response.statusText}`
+          );
         }
         const terms: TenderTerm[] = await response.json();
         setTenderTerms(terms || []);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch tender terms";
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to fetch tender terms";
         console.error("Error fetching tender terms:", err);
         setError(errorMessage);
         setTenderTerms([]);
@@ -114,7 +119,7 @@ export const NITCopy = ({
       try {
         const response = await fetch(
           `/api/tender-term-templates?ids=${templateIds.join(",")}`,
-          { signal: controller.signal },
+          { signal: controller.signal }
         );
         if (!response.ok) {
           throw new Error(`Failed to load templates: ${response.statusText}`);
@@ -123,7 +128,8 @@ export const NITCopy = ({
         setSelectedTemplates(data || []);
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
-        const errorMessage = err instanceof Error ? err.message : "Failed to load templates";
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load templates";
         console.error("Error fetching templates:", err);
         setError(errorMessage);
         setSelectedTemplates([]);
@@ -157,7 +163,7 @@ export const NITCopy = ({
         ELIGIBLE: [],
         QUALIFICATION_CRITERIA: [],
         TERMS_CONDITIONS: [],
-      },
+      }
     );
   }, [selectedTemplates]);
 
@@ -195,26 +201,31 @@ export const NITCopy = ({
   // If no termsTemplateIds found, use constant terms
   // If termsTemplateIds found, use terms from templates
   const finalTermsByCategory = useMemo<TermsByCategory>(() => {
-    const categories: TermCategory[] = ["ELIGIBLE", "QUALIFICATION_CRITERIA", "TERMS_CONDITIONS"];
-    
+    const categories: TermCategory[] = [
+      "ELIGIBLE",
+      "QUALIFICATION_CRITERIA",
+      "TERMS_CONDITIONS",
+    ];
+
     // If no template IDs, use constant terms
     if (!templateIds.length) {
       return defaultTerms;
     }
-    
+
     // If template IDs exist, use terms from templates
     return categories.reduce<TermsByCategory>(
       (acc, category) => {
         const templateTerms = templateContentByCategory[category];
         // Use template terms if available, otherwise use defaults as fallback
-        acc[category] = templateTerms.length > 0 ? templateTerms : defaultTerms[category];
+        acc[category] =
+          templateTerms.length > 0 ? templateTerms : defaultTerms[category];
         return acc;
       },
       {
         ELIGIBLE: [],
         QUALIFICATION_CRITERIA: [],
         TERMS_CONDITIONS: [],
-      },
+      }
     );
   }, [templateIds.length, templateContentByCategory, defaultTerms]);
 
@@ -225,14 +236,20 @@ export const NITCopy = ({
 
   // Generate work items for PDF
   const generateWorkItems = useCallback((): string[][] => {
+    const PERFORMANCE_SECURITY_RATE = nitdetails.percentageofworkvaluerequired / 100;
     return nitdetails.WorksDetail.map((work, index) => {
-      const activityDescription = work.ApprovedActionPlanDetails?.activityDescription || "N/A";
+      const activityDescription =
+        work.ApprovedActionPlanDetails?.activityDescription || "N/A";
       const activityCode = work.ApprovedActionPlanDetails?.activityCode || "";
       const schemeName = work.ApprovedActionPlanDetails?.schemeName || "N/A";
       const estimateAmount = work.finalEstimateAmount.toFixed(2);
       const participationFee = work.participationFee.toFixed(2);
-      const earnestMoney = (work.finalEstimateAmount * EARNEST_MONEY_RATE).toFixed(2);
-      const performanceSecurity = (work.finalEstimateAmount * PERFORMANCE_SECURITY_RATE).toFixed(2);
+      const earnestMoney = Math.round(
+        work.finalEstimateAmount * EARNEST_MONEY_RATE
+      ).toString();
+      const performanceSecurity = Math.round(
+        work.finalEstimateAmount * PERFORMANCE_SECURITY_RATE
+      ).toString();
 
       return [
         (index + 1).toString(),
@@ -255,8 +272,8 @@ export const NITCopy = ({
 
     return {
       field4: `(E-Procurement- ${nitdetails.nitCount})`,
-      memono1: `Memo No: ${memoNumber}/DGP/${memoYear}`,
-      memono2: `Memo No: ${memoNumber}/DGP/${memoYear}`,
+      memono1: `Memo No: ${memoNumber}/${gpcode}/${memoYear}`,
+      memono2: `Memo No: ${memoNumber}/${gpcode}/${memoYear}`,
       memoDate1: `Date: ${memoDateFormatted}`,
       memoDate2: `Date: ${memoDateFormatted}`,
       worklist: generateWorkItems(),
@@ -265,8 +282,14 @@ export const NITCopy = ({
       qualify: formatTermsForPDF(finalTermsByCategory.QUALIFICATION_CRITERIA),
       termcondition: formatTermsForPDF(finalTermsByCategory.TERMS_CONDITIONS),
       timetable: [
-        ["Tender Publishing Date", formatDateTimeCustom(nitdetails.publishingDate)],
-        ["Bid Submission Start Date", formatDateTimeCustom(nitdetails.startTime)],
+        [
+          "Tender Publishing Date",
+          formatDateTimeCustom(nitdetails.publishingDate),
+        ],
+        [
+          "Bid Submission Start Date",
+          formatDateTimeCustom(nitdetails.startTime),
+        ],
         ["Bid Submission End Date", formatDateTimeCustom(nitdetails.endTime)],
         [
           "Technical Bid Opening Date",
@@ -299,19 +322,22 @@ export const NITCopy = ({
     try {
       const input = generatePDFInput();
       const pdf = await generatePDF(TEMPLATE_PATH, [input]);
-      
+
       // Create and download PDF
       // Convert Uint8Array to ArrayBuffer for Blob compatibility
-      const pdfBuffer = pdf instanceof Uint8Array 
-        ? pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength)
-        : (pdf as any).buffer || pdf;
+      const pdfBuffer =
+        pdf instanceof Uint8Array
+          ? pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength)
+          : (pdf as any).buffer || pdf;
       const blob = new Blob([pdfBuffer], {
         type: "application/pdf",
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `NIT_${nitdetails.nitCount}_${formatDate(new Date())}.pdf`;
+      link.download = `NIT_${nitdetails.nitCount}_${formatDate(
+        new Date()
+      )}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -367,7 +393,7 @@ export const NITCopy = ({
         ) : (
           <>
             <Printer className="h-4 w-4" />
-            <span>Generate NIT PDF</span>
+            <span>NIT PDF</span>
           </>
         )}
       </Button>

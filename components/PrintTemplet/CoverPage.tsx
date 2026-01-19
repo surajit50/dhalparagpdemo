@@ -8,7 +8,7 @@ import { Printer, Loader2 } from "lucide-react";
 import { generatePDF } from "@/lib/pdf-generator";
 import { formatDate, getFinancialYear } from "@/utils/utils";
 import { getworklenthbynitno } from "@/lib/auth";
-
+import { gpcode } from "@/constants/gpinfor";
 const templatePath = "/templates/coverpage.json";
 
 type CoverPagePDFProps = {
@@ -41,12 +41,12 @@ export default function CoverPagePrint({
 
           nitmemo: `${
             workCoverPageType.nitDetails.memoNumber
-          }/DGP/${workCoverPageType.nitDetails.memoDate.getFullYear()}`,
+          }/${gpcode}/${workCoverPageType.nitDetails.memoDate.getFullYear()}`,
           nitmeodate: formatDate(workCoverPageType.nitDetails.memoDate),
           workslno: `${workCoverPageType.workslno.toFixed()} out of ${nitworkcount}`,
           workordermemo: `${
             workCoverPageType.AwardofContract?.workodermenonumber
-          }/DGP/${workCoverPageType.AwardofContract?.workordeermemodate.getFullYear()}`,
+          }/${gpcode}/${workCoverPageType.AwardofContract?.workordeermemodate.getFullYear()}`,
           workmemodate: workCoverPageType.AwardofContract?.workordeermemodate
             ? formatDate(workCoverPageType.AwardofContract?.workordeermemodate)
             : "",

@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
+import { gpcode } from "@/constants/gpinfor";
 import {
   domicileCertificateEnquirySchema,
   type DomicileCertificateEnquiryFormData,
@@ -78,7 +78,7 @@ export function DomicileCertificateEnquiryForm() {
                     <FormItem>
                       <FormLabel>Memo Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 141/DGP/2025" {...field} />
+                        <Input placeholder="e.g., 141/${gpcode}/2025" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

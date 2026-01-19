@@ -14,7 +14,7 @@ import { sentAwardedNotification, sentWorkOrderConfirmation } from "@/lib/mail";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatDate } from "@/utils/utils";
-
+import {gpcode} from "@/constants/gpinfor";
 export async function sendReceivedRemainder(formData: FormData) {
   const workOrderId = formData.get("workOrderId") as string;
 
@@ -81,7 +81,7 @@ export async function sendReceivedRemainder(formData: FormData) {
       agencyName,
       `${
         workOrder.awardofcontractdetails.workodermenonumber
-      }/DGP/${workOrder.awardofcontractdetails.workordeermemodate.getFullYear()}`,
+      }/${gpcode}/${workOrder.awardofcontractdetails.workordeermemodate.getFullYear()}`,
       formatDate(workOrder.awardofcontractdetails.workordeermemodate),
       nitNumber.toString(),
       workDescription,

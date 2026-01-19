@@ -13,7 +13,7 @@ import {
 import { db } from "@/lib/db";
 import { formatDate } from "@/utils/utils";
 import type { NextRequest } from "next/server";
-
+import { gpcode } from "@/constants/gpinfor";
 export const runtime = "edge";
 
 function parseDate(dateString: string | Date): Date {
@@ -122,14 +122,14 @@ export async function POST(request: NextRequest) {
         agencydetails: `This is to certify that ${agencyName}, located at ${agencyAddress}, has successfully completed:`,
         workname:
           work.ApprovedActionPlanDetails?.activityDescription || "Unnamed Work",
-        nitdetails: `${work.nitDetails?.memoNumber || "N/A"}/DGP/${
+        nitdetails: `${work.nitDetails?.memoNumber || "N/A"}/${gpcode}/${
           work.nitDetails?.memoDate
             ? parseDate(work.nitDetails.memoDate).getFullYear()
             : "N/A"
         } Date: ${memoDate} | Sl.No: ${work.workslno || work.id}`,
         workorderno: `${
           work.AwardofContract?.workodermenonumber || "N/A"
-        }/DGP/${
+        }/${gpcode}/${
           work.AwardofContract?.workordeermemodate
             ? parseDate(work.AwardofContract.workordeermemodate).getFullYear()
             : "N/A"

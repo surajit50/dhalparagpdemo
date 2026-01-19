@@ -10,7 +10,7 @@ import {
   Clock,
 } from "lucide-react";
 import { db } from "@/lib/db";
-
+import { gpcode } from "@/constants/gpinfor";
 export const ShowWorkDetails = async ({
   worksDetailId,
 }: {
@@ -65,7 +65,7 @@ export const ShowWorkDetails = async ({
           <div>
             <p className="text-xs text-gray-500">NIT Number</p>
             <p className="text-sm font-medium">
-              {workdetails.nitDetails.memoNumber}/DGP/
+              {workdetails.nitDetails.memoNumber}/${gpcode}/
               {workdetails.nitDetails.memoDate.getFullYear()}
             </p>
             <div className="flex items-center gap-1 text-gray-500 text-xs">

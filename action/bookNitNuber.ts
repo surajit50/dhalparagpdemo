@@ -45,6 +45,7 @@ export const bookNitNumber = async (
       supplynit: values.supplynit,
       supplyitemname: values.supplyitemname,
       nitCount: values.nitCount,
+      percentageofworkvaluerequired: values.percentageofworkvaluerequired,
       termsTemplateIds: values.termsTemplateIds || [],
     });
 
@@ -85,6 +86,7 @@ export const bookNitNumber = async (
         isSupply: validatedData.supplynit,
         supplyitemname: validatedData.supplyitemname || null,
         nitCount: validatedData.nitCount,
+        percentageofworkvaluerequired: validatedData.percentageofworkvaluerequired,
         termsTemplateIds: validatedData.termsTemplateIds || [],
       },
     });

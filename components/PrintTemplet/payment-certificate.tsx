@@ -6,7 +6,7 @@ import { Loader2, Printer } from "lucide-react";
 import { generatePDF } from "../pdfgenerator";
 import { PaymentDetilsType } from "@/types";
 import { formatDate } from "@/utils/utils";
-
+import { gpcode } from "@/constants/gpinfor";
 const templatePath = "/templates/paymentcertificatetempleted.json";
 
 export default function PaymentCertificate({
@@ -34,13 +34,13 @@ export default function PaymentCertificate({
       const estimage = paymentdetails.finalEstimateAmount.toFixed(2);
       const nitmemono = `${
         paymentdetails.nitDetails.memoNumber
-      }/DGP/${paymentdetails.nitDetails.memoDate.getFullYear()}`;
+      }/${gpcode}/${paymentdetails.nitDetails.memoDate.getFullYear()}`;
       const nitdate = formatDate(paymentdetails.nitDetails.memoDate);
       const workslno = paymentdetails.workslno;
 
       const workorderno = `${
         paymentdetails.AwardofContract?.workodermenonumber
-      }/DGP/${paymentdetails.AwardofContract?.workordeermemodate.getFullYear()}`;
+      }/${gpcode}/${paymentdetails.AwardofContract?.workordeermemodate.getFullYear()}`;
 
       const workorderdate = paymentdetails.AwardofContract?.workordeermemodate
         ? formatDate(paymentdetails.AwardofContract?.workordeermemodate)
@@ -49,7 +49,13 @@ export default function PaymentCertificate({
       const inputs = [
         {
           agencydetails: `PAYMENT CERTIFICATE ISSUED TO ${
-            agencyDetails?.name?.toUpperCase() || "N/A"
+            agencyDetails?.agencyType === "FARM"
+              ? `${agencyDetails?.name}${
+                  agencyDetails?.proprietorName
+                    ? ` (${agencyDetails.proprietorName})`
+                    : ""
+                }`
+              : `${agencyDetails?.name}`
           }, ${
             agencyDetails?.contactDetails?.toUpperCase() || "N/A"
           } BY THE PRADHAN OF NO 3 DHALPARA GRAM PANCHAYAT`,

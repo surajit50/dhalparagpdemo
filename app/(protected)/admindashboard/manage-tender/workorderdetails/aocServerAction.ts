@@ -7,6 +7,9 @@ import { db } from "@/lib/db";
 import { sentAwardedNotification } from "@/lib/mail";
 import { CreateAgreementInput } from "@/types/agreement";
 import { z } from "zod";
+import { sendSms } from "@/action/sendSms";
+import { gpcode } from "@/constants/gpinfor";
+import { formatDate } from "@/utils/utils";
 
 // Validation schema
 const AocSchema = z.object({
@@ -112,6 +115,39 @@ export const addAoCdetails = async (data: FormData) => {
           )
         : Promise.resolve(),
     ]);
+// sent SMS notification (assuming sendSms is properly imported)
+// if mobile available
+if(!bidder.agencydetails.mobileNumber){ 
+  throw new Error("Bidder mobile number not found"); 
+
+}
+
+//bidder mobile no with add +91
+
+const phoneWithCountryCode = `+91${bidder.agencydetails.mobileNumber}`;
+   const memoDate = work.nitDetails?.memoDate;
+
+const sms = await sendSms(
+  phoneWithCountryCode,
+  `Congratulations! 🎉 You have been awarded the contract for work.
+NIT No: ${work.nitDetails?.memoNumber ?? 0}/${gpcode}/${memoDate ? memoDate.getFullYear() : ""}
+Date: ${memoDate ? formatDate(memoDate) : "N/A"}
+Sl No: ${work.workslno}
+Dhalpara Gram Panchayat.
+
+Please check your email for further details.`
+);
+ 
+
+ if(!sms){
+  throw new Error("Failed to send SMS notification");
+ } 
+ 
+ if (sms.MessageId) {
+    console.log("SMS sent successfully, Message ID:", sms.MessageId);
+  } else {
+    console.log("SMS sending failed.");
+  }
 
     return { success: "Work order finalized successfully." };
   } catch (error) {

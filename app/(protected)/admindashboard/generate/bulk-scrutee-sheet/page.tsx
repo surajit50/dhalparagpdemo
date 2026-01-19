@@ -37,7 +37,7 @@ import { generatePDF } from "@/components/pdfgenerator";
 import { workdetailsforprint } from "@/types";
 import { fetchworkdetailsbynitno, fetchNitNo } from "@/action/bookNitNuber";
 import { formatDate } from "@/utils/utils";
-
+import { gpcode } from "@/constants/gpinfor";
 const TEMPLATE_PATH = "/templates/scrutnisheettemplete.json";
 
 export default function BulkScrutinySheetPage() {
@@ -152,7 +152,7 @@ export default function BulkScrutinySheetPage() {
       const combinedInputs = selectedWorkDetails.map((workdetails) => ({
         field2: `Scrutiny Report of Tender Papers for NIT No. ${
           workdetails.nitDetails.memoNumber
-        }/DGP/${new Date(
+        }/${gpcode}/${new Date(
           workdetails.nitDetails.memoDate
         ).getFullYear()} Dated: ${formatDate(
           workdetails.nitDetails.memoDate
@@ -295,7 +295,9 @@ export default function BulkScrutinySheetPage() {
                 <SelectContent>
                   {nitNumbers.map((nit) => (
                     <SelectItem key={nit.memoNumber} value={nit.memoNumber}>
-                      {`${nit.memoNumber}/DGP/${nit.memoDate.getFullYear()}`}
+                      {`${
+                        nit.memoNumber
+                      }/${gpcode}/${nit.memoDate.getFullYear()}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

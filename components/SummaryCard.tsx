@@ -1,36 +1,54 @@
+"use client";
 
-"use client"
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { IndianRupee, TrendingUp, FileText } from "lucide-react"
-import { PieChart, Pie, Cell } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { IndianRupee, TrendingUp, FileText } from "lucide-react";
+import { PieChart, Pie, Cell } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { gpcode } from "@/constants/gpinfor";
 interface SummaryItem {
-  financialYear: string
-  formattedNit: string
-  nitDate: Date
-  totalPaid: number
-  totalPending: number
-  workCount: number
+  financialYear: string;
+  formattedNit: string;
+  nitDate: Date;
+  totalPaid: number;
+  totalPending: number;
+  workCount: number;
 }
 
 interface SummaryCardProps {
-  summaryData: Record<string, SummaryItem>
-  grandTotalPaid: number
-  grandTotalPending: number
-  totalWorks: number
+  summaryData: Record<string, SummaryItem>;
+  grandTotalPaid: number;
+  grandTotalPending: number;
+  totalWorks: number;
 }
 
-export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPending, totalWorks }: SummaryCardProps) {
-  const nitEntries = Object.entries(summaryData)
-  const totalAmount = grandTotalPaid + grandTotalPending
+export default function SummaryCard({
+  summaryData,
+  grandTotalPaid,
+  grandTotalPending,
+  totalWorks,
+}: SummaryCardProps) {
+  const nitEntries = Object.entries(summaryData);
+  const totalAmount = grandTotalPaid + grandTotalPending;
 
   // Bug fix: Handle division by zero
-  const paidPercentage = totalAmount > 0 ? (grandTotalPaid / totalAmount) * 100 : 0
-  const pendingPercentage = totalAmount > 0 ? (grandTotalPending / totalAmount) * 100 : 0
+  const paidPercentage =
+    totalAmount > 0 ? (grandTotalPaid / totalAmount) * 100 : 0;
+  const pendingPercentage =
+    totalAmount > 0 ? (grandTotalPending / totalAmount) * 100 : 0;
 
   const chartConfig = {
     paid: {
@@ -41,7 +59,7 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
       label: "Pending",
       color: "hsl(var(--chart-2))",
     },
-  }
+  };
 
   const pieData = [
     {
@@ -58,7 +76,7 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
       percentage: pendingPercentage,
       fill: "var(--color-pending)",
     },
-  ]
+  ];
 
   return (
     <Card className="w-full">
@@ -80,7 +98,10 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
               <IndianRupee className="h-4 w-4 text-muted-foreground" />
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Total Value</p>
-                <CurrencyDisplay value={totalAmount} className="text-lg font-bold" />
+                <CurrencyDisplay
+                  value={totalAmount}
+                  className="text-lg font-bold"
+                />
               </div>
             </div>
           </div>
@@ -91,10 +112,18 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
         {/* Enhanced Chart Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 bg-muted/30 rounded-xl border">
           <div className="flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4 text-center">Payment Distribution</h3>
-            <ChartContainer config={chartConfig} className="aspect-square max-h-[250px] w-full">
+            <h3 className="text-lg font-semibold mb-4 text-center">
+              Payment Distribution
+            </h3>
+            <ChartContainer
+              config={chartConfig}
+              className="aspect-square max-h-[250px] w-full"
+            >
               <PieChart>
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
                 <Pie
                   data={pieData}
                   dataKey="value"
@@ -115,7 +144,9 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-md font-medium text-center lg:text-left">Breakdown</h4>
+            <h4 className="text-md font-medium text-center lg:text-left">
+              Breakdown
+            </h4>
             {pieData.map((entry) => (
               <div
                 key={entry.name}
@@ -127,7 +158,9 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
                     style={{ backgroundColor: entry.fill }}
                   />
                   <div>
-                    <span className="font-medium text-foreground">{entry.label}</span>
+                    <span className="font-medium text-foreground">
+                      {entry.label}
+                    </span>
                     <Badge variant="secondary" className="ml-2 text-xs">
                       {entry.percentage.toFixed(1)}%
                     </Badge>
@@ -152,21 +185,34 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="font-semibold">Financial Year</TableHead>
+                  <TableHead className="font-semibold">
+                    Financial Year
+                  </TableHead>
                   <TableHead className="font-semibold">NIT Number</TableHead>
                   <TableHead className="font-semibold">Date</TableHead>
-                  <TableHead className="text-center font-semibold">Works</TableHead>
-                  <TableHead className="text-right font-semibold">Paid Amount</TableHead>
-                  <TableHead className="text-right font-semibold">Pending Amount</TableHead>
+                  <TableHead className="text-center font-semibold">
+                    Works
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Paid Amount
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Pending Amount
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {nitEntries.map(([memo, data]) => (
-                  <TableRow key={memo} className="hover:bg-muted/30 transition-colors">
+                  <TableRow
+                    key={memo}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
                     <TableCell className="font-medium">
                       <Badge variant="outline">{data.financialYear}</Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{data.formattedNit}/DGP/{data.nitDate.getFullYear()}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {data.formattedNit}/${gpcode}/{data.nitDate.getFullYear()}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {data.nitDate.toLocaleDateString("en-IN", {
                         day: "2-digit",
@@ -221,7 +267,7 @@ export default function SummaryCard({ summaryData, grandTotalPaid, grandTotalPen
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // Enhanced CurrencyDisplay Component
@@ -230,12 +276,14 @@ export const CurrencyDisplay = ({
   className = "",
   showSymbol = true,
 }: {
-  value: number
-  className?: string
-  showSymbol?: boolean
+  value: number;
+  className?: string;
+  showSymbol?: boolean;
 }) => (
   <div className={`flex items-center justify-end gap-1 ${className}`}>
-    {showSymbol && <IndianRupee className="h-4 w-4 text-current flex-shrink-0" />}
+    {showSymbol && (
+      <IndianRupee className="h-4 w-4 text-current flex-shrink-0" />
+    )}
     <span className="font-medium tabular-nums">
       {value.toLocaleString("en-IN", {
         maximumFractionDigits: 0,
@@ -243,4 +291,4 @@ export const CurrencyDisplay = ({
       })}
     </span>
   </div>
-)
+);

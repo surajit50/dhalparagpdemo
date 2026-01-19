@@ -30,7 +30,7 @@ const Header = () => {
         {/* Top Navbar */}
         <div className="flex justify-between items-center py-1.5 border-b">
           <div className="flex items-center space-x-2">
-            <DigitalClock />
+            
           </div>
           <div className="flex items-center space-x-2">
             {mounted && (

@@ -5,6 +5,7 @@ import { formatDate } from "@/utils/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { gpcode } from "@/constants/gpinfor";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,7 +49,7 @@ export default async function UploadTenderPage({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">NIT Memo Number</p>
               <p className="font-semibold text-primary text-lg">
-                {tender.memoNumber}/DGP/{tender.memoDate.getFullYear()}
+                {tender.memoNumber}/${gpcode}/{tender.memoDate.getFullYear()}
               </p>
             </div>
 

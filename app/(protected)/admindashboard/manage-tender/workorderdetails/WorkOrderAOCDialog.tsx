@@ -45,7 +45,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
+import { gpcode } from "@/constants/gpinfor";
 // Types
 interface AgencyDetails {
   name: string;
@@ -105,8 +105,8 @@ const BADGE_COLORS = [
 
 // Query keys
 const QUERY_KEYS = {
-  workOrderAOC: (workId: string) => ['workOrderAOC', workId],
-  financialBids: (workId: string) => ['financialBids', workId],
+  workOrderAOC: (workId: string) => ["workOrderAOC", workId],
+  financialBids: (workId: string) => ["financialBids", workId],
 } as const;
 
 // API functions
@@ -116,9 +116,13 @@ const fetchWorkOrderAOC = async (workId: string) => {
   return response.json();
 };
 
-const editFinancialBid = async ({ bidId, newAmount, workId }: { 
-  bidId: string; 
-  newAmount: number; 
+const editFinancialBid = async ({
+  bidId,
+  newAmount,
+  workId,
+}: {
+  bidId: string;
+  newAmount: number;
   workId: string;
 }) => {
   const response = await fetch("/api/edit-financial-bid", {
@@ -145,8 +149,8 @@ export default function WorkOrderAOCDialog({
   workId,
 }: WorkOrderAOCDialogProps) {
   const { data, isLoading, error } = useQuery({
-    queryKey: workId ? QUERY_KEYS.workOrderAOC(workId) : ['workOrderAOC'],
-    queryFn: () => workId ? fetchWorkOrderAOC(workId) : Promise.resolve(null),
+    queryKey: workId ? QUERY_KEYS.workOrderAOC(workId) : ["workOrderAOC"],
+    queryFn: () => (workId ? fetchWorkOrderAOC(workId) : Promise.resolve(null)),
     enabled: open && !!workId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -154,8 +158,12 @@ export default function WorkOrderAOCDialog({
 
   const renderContent = useCallback(() => {
     if (isLoading) return <div className="p-8 text-center">Loading...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Failed to load data</div>;
-    if (data) return <AOCForm {...data} workId={workId!} onOpenChange={onOpenChange} />;
+    if (error)
+      return (
+        <div className="p-8 text-center text-red-500">Failed to load data</div>
+      );
+    if (data)
+      return <AOCForm {...data} workId={workId!} onOpenChange={onOpenChange} />;
     return <div className="p-8 text-center">No data</div>;
   }, [isLoading, error, data, workId, onOpenChange]);
 
@@ -174,10 +182,15 @@ export default function WorkOrderAOCDialog({
   );
 }
 
-function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) {
+function AOCForm({
+  worksDetail,
+  acceptbi,
+  workId,
+  onOpenChange,
+}: AOCFormProps) {
   const [editingBidId, setEditingBidId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>("");
-  
+
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -195,10 +208,14 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
     mutationFn: editFinancialBid,
     onMutate: async ({ bidId, newAmount }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.financialBids(workId) });
+      await queryClient.cancelQueries({
+        queryKey: QUERY_KEYS.financialBids(workId),
+      });
 
       // Snapshot the previous value
-      const previousBids = queryClient.getQueryData(QUERY_KEYS.financialBids(workId));
+      const previousBids = queryClient.getQueryData(
+        QUERY_KEYS.financialBids(workId)
+      );
 
       // Optimistically update to the new value
       queryClient.setQueryData(QUERY_KEYS.financialBids(workId), (old: Bid[]) =>
@@ -215,7 +232,10 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousBids) {
-        queryClient.setQueryData(QUERY_KEYS.financialBids(workId), context.previousBids);
+        queryClient.setQueryData(
+          QUERY_KEYS.financialBids(workId),
+          context.previousBids
+        );
       }
       toast({
         title: "Error",
@@ -232,16 +252,20 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we're in sync with server
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.financialBids(workId) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.financialBids(workId),
+      });
     },
   });
 
   // Memoized sorted bids and lowest bidder
   const { sortedBids, lowestBidderId } = useMemo(() => {
     const filteredBids = bids.filter((bid) => bid.biddingAmount !== null);
-    const sorted = filteredBids.sort((a, b) => (a.biddingAmount ?? 0) - (b.biddingAmount ?? 0));
+    const sorted = filteredBids.sort(
+      (a, b) => (a.biddingAmount ?? 0) - (b.biddingAmount ?? 0)
+    );
     const lowestId = sorted.length > 0 ? sorted[0].id : "";
-    
+
     return { sortedBids: sorted, lowestBidderId: lowestId };
   }, [bids]);
 
@@ -268,19 +292,22 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
     setEditAmount(currentAmount.toString());
   }, []);
 
-  const handleSaveEdit = useCallback((bidId: string) => {
-    const newAmount = parseFloat(editAmount);
-    if (isNaN(newAmount) || newAmount <= 0) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid amount",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSaveEdit = useCallback(
+    (bidId: string) => {
+      const newAmount = parseFloat(editAmount);
+      if (isNaN(newAmount) || newAmount <= 0) {
+        toast({
+          title: "Error",
+          description: "Please enter a valid amount",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    editBidMutation.mutate({ bidId, newAmount, workId });
-  }, [editAmount, workId, editBidMutation, toast]);
+      editBidMutation.mutate({ bidId, newAmount, workId });
+    },
+    [editAmount, workId, editBidMutation, toast]
+  );
 
   const handleCancelEdit = useCallback(() => {
     setEditingBidId(null);
@@ -311,11 +338,13 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
           description: "Work order finalized!",
           className: "bg-green-100 text-green-800 border-green-300",
         });
-        
+
         // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['workOrders'] });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workOrderAOC(workId) });
-        
+        queryClient.invalidateQueries({ queryKey: ["workOrders"] });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.workOrderAOC(workId),
+        });
+
         router.refresh();
         onOpenChange?.(false);
       }
@@ -333,13 +362,14 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
     submitFormMutation.mutate(values);
   };
 
-  const getBidRank = useCallback((bidId: string) => 
-    sortedBids.findIndex((bid) => bid.id === bidId) + 1,
+  const getBidRank = useCallback(
+    (bidId: string) => sortedBids.findIndex((bid) => bid.id === bidId) + 1,
     [sortedBids]
   );
 
-  const getBadgeColor = useCallback((rank: number) => 
-    BADGE_COLORS[rank - 1] || "bg-gray-100 text-gray-800 border-gray-300",
+  const getBadgeColor = useCallback(
+    (rank: number) =>
+      BADGE_COLORS[rank - 1] || "bg-gray-100 text-gray-800 border-gray-300",
     []
   );
 
@@ -382,11 +412,15 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
                       isEditing={editingBidId === item.id}
                       editAmount={editAmount}
                       onEditAmountChange={setEditAmount}
-                      onEdit={() => handleEditBid(item.id, item.biddingAmount || 0)}
+                      onEdit={() =>
+                        handleEditBid(item.id, item.biddingAmount || 0)
+                      }
                       onSave={() => handleSaveEdit(item.id)}
                       onCancel={handleCancelEdit}
                       getBadgeColor={getBadgeColor}
-                      isSaving={editBidMutation.isPending && editingBidId === item.id}
+                      isSaving={
+                        editBidMutation.isPending && editingBidId === item.id
+                      }
                     />
                   ))}
                 </div>
@@ -401,8 +435,8 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
         {/* Memo Details */}
         <MemoDetailsCard form={form} />
 
-        <FormActions 
-          form={form} 
+        <FormActions
+          form={form}
           onOpenChange={onOpenChange}
           isSubmitting={submitFormMutation.isPending}
         />
@@ -414,7 +448,7 @@ function AOCForm({ worksDetail, acceptbi, workId, onOpenChange }: AOCFormProps) 
 // Extracted Work Details Card Component
 function WorkDetailsCard({ worksDetail }: { worksDetail: WorkDetails }) {
   const nitMemoNumber = worksDetail?.nitDetails?.memoNumber || "-";
-  const nitMemoYear = worksDetail?.nitDetails?.memoDate 
+  const nitMemoYear = worksDetail?.nitDetails?.memoDate
     ? new Date(worksDetail.nitDetails.memoDate).getFullYear()
     : "";
 
@@ -429,17 +463,20 @@ function WorkDetailsCard({ worksDetail }: { worksDetail: WorkDetails }) {
       <CardContent className="p-6">
         <div className="flex flex-wrap gap-4 mb-4 text-sm">
           <Badge variant="outline" className="bg-blue-50 text-blue-700">
-            <span className="font-medium">NIT No.:</span> {nitMemoNumber}/DGP/{nitMemoYear}
+            <span className="font-medium">NIT No.:</span> {nitMemoNumber}/$
+            {gpcode}/{nitMemoYear}
           </Badge>
           <Badge variant="outline" className="bg-purple-50 text-purple-700">
-            <span className="font-medium">Work Sl. No.:</span> {worksDetail?.workslno || "-"}
+            <span className="font-medium">Work Sl. No.:</span>{" "}
+            {worksDetail?.workslno || "-"}
           </Badge>
         </div>
 
         <div className="mb-4">
           <Label className="text-base text-muted-foreground">Work Name</Label>
           <p className="text-xl font-bold mt-1">
-            {worksDetail?.ApprovedActionPlanDetails?.activityDescription || "N/A"}
+            {worksDetail?.ApprovedActionPlanDetails?.activityDescription ||
+              "N/A"}
           </p>
         </div>
 
@@ -453,7 +490,9 @@ function WorkDetailsCard({ worksDetail }: { worksDetail: WorkDetails }) {
           <div>
             <Label className="text-muted-foreground">Estimated Cost</Label>
             <p className="font-medium text-green-700">
-              ₹{worksDetail?.ApprovedActionPlanDetails?.estimatedCost?.toLocaleString() || "-"}
+              ₹
+              {worksDetail?.ApprovedActionPlanDetails?.estimatedCost?.toLocaleString() ||
+                "-"}
             </p>
           </div>
         </div>
@@ -520,12 +559,12 @@ function MemoDetailsCard({ form }: { form: any }) {
 }
 
 // Extracted Form Actions Component
-function FormActions({ 
-  form, 
-  onOpenChange, 
-  isSubmitting 
-}: { 
-  form: any; 
+function FormActions({
+  form,
+  onOpenChange,
+  isSubmitting,
+}: {
+  form: any;
   onOpenChange: (open: boolean) => void;
   isSubmitting: boolean;
 }) {
@@ -564,7 +603,7 @@ const BidItem = memo(function BidItem({
   onCancel,
   getBadgeColor,
   isSaving = false,
-}: BidItemProps & { 
+}: BidItemProps & {
   getBadgeColor: (rank: number) => string;
   isSaving?: boolean;
 }) {
@@ -635,7 +674,11 @@ const BidItem = memo(function BidItem({
                 ) : (
                   <CheckCircleIcon className="w-4 h-4" />
                 )}
-                {rank === 1 ? "Lowest Bid" : rank === 2 ? "2nd Lowest" : "3rd Lowest"}
+                {rank === 1
+                  ? "Lowest Bid"
+                  : rank === 2
+                  ? "2nd Lowest"
+                  : "3rd Lowest"}
               </Badge>
             )}
           </div>
@@ -643,7 +686,10 @@ const BidItem = memo(function BidItem({
           <div className="flex items-center gap-2 bg-muted/40 px-4 py-2 rounded-lg">
             <CurrencyIcon className="w-5 h-5 text-muted-foreground" />
             {isEditing ? (
-              <div className="flex items-center gap-2" onClick={handleInputClick}>
+              <div
+                className="flex items-center gap-2"
+                onClick={handleInputClick}
+              >
                 <Input
                   type="number"
                   value={editAmount}
@@ -660,7 +706,12 @@ const BidItem = memo(function BidItem({
                 >
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleCancelClick} disabled={isSaving}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelClick}
+                  disabled={isSaving}
+                >
                   Cancel
                 </Button>
               </div>

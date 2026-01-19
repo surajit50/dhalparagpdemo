@@ -20,7 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
+import { blockname, gpcode, gpname, nameinprodhan, gpaddress } from "@/constants/gpinfor";
 export function SearchWorkbyNitNoForm() {
   const [nitNumbers, setNitNumbers] = useState<
     { memoNumber: string; memoDate: Date }[]
@@ -150,7 +150,7 @@ export function SearchWorkbyNitNoForm() {
                           )}
                         />
                         <span className="font-mono">
-                          {`${memoNumber}/DGP/ (${memoDate.getFullYear()})`}
+                          {`${memoNumber}/${gpcode}/(${memoDate.getFullYear()})`}
                         </span>
                       </CommandItem>
                     ))}
@@ -180,7 +180,7 @@ export function SearchWorkbyNitNoForm() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Selected NIT:{" "}
             <span className="font-medium text-blue-600 dark:text-blue-400">
-              {`${selectedNitNo}/DGP/(${selectedMemoDate?.getFullYear()})`}
+              {`${selectedNitNo}/${gpcode}/(${selectedMemoDate?.getFullYear()})`}
             </span>
           </p>
         )}

@@ -71,7 +71,7 @@
       {
         "name": "refno",
         "type": "text",
-        "content": "47/DGP/2025",
+        "content": "47/${gpcode}/2025",
         "position": { "x": 38.32, "y": 25.01 },
         "width": 45,
         "height": 6.55,
@@ -348,7 +348,7 @@
       {
         "name": "nitno",
         "type": "text",
-        "content": "44/DGP/2025 19/03/2025",
+        "content": "44/${gpcode}/2025 19/03/2025",
         "position": { "x": 73.44, "y": 75.93 },
         "width": 126.3,
         "height": 6.02,

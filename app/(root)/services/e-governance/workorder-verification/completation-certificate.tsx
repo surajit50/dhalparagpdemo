@@ -5,7 +5,7 @@ import { useState } from "react";
 import { formatDate } from "@/utils/utils";
 import { CheckCircle2, XCircle, QrCode, Download, ChevronLeft } from "lucide-react";
 import type { CompletationCertificate } from "@/types";
-
+import { gpcode } from "@/constants/gpinfor";
 interface WorkCompletionCertificateProps {
   initialPaymentDetails: CompletationCertificate;
 }
@@ -155,7 +155,7 @@ export const WorkCompletionCertificate: React.FC<
               <div className="flex justify-between">
                 <dt className="text-gray-600">Work Order No:</dt>
                 <dd className="font-medium text-gray-800">
-                  {`${initialPaymentDetails.AwardofContract?.workodermenonumber}/DGP/${initialPaymentDetails.AwardofContract?.workordeermemodate.getFullYear()}`}
+                  {`${initialPaymentDetails.AwardofContract?.workodermenonumber}/${gpcode}/${initialPaymentDetails.AwardofContract?.workordeermemodate.getFullYear()}`}
                 </dd>
               </div>
               <div className="flex justify-between">
@@ -203,7 +203,7 @@ export const WorkCompletionCertificate: React.FC<
         <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
           <h3 className="font-semibold text-blue-700 mb-2">NIT Details</h3>
           <p className="text-sm text-gray-700">
-            {`${initialPaymentDetails.nitDetails.memoNumber}/DGP/${initialPaymentDetails.nitDetails.memoDate.getFullYear()} Date: ${formatDate(
+            {`${initialPaymentDetails.nitDetails.memoNumber}/${gpcode}/${initialPaymentDetails.nitDetails.memoDate.getFullYear()} Date: ${formatDate(
               initialPaymentDetails.nitDetails.memoDate
             )} Work Sl no ${initialPaymentDetails.workslno}`}
           </p>

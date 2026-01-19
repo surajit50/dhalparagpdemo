@@ -171,7 +171,7 @@ export const EmailForm = () => {
     return Object.keys(newErrors).length === 0;
   }, [state.to, state.cc, state.bcc]);
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = useCallback(async () => {
     if (!validateForm()) {
       toast.error("Please fix the errors before sending");
       return;
@@ -196,7 +196,7 @@ export const EmailForm = () => {
     } finally {
       dispatch({ type: "SET_SENDING", isSending: false });
     }
-  };
+  }, [state, validateForm, toast, dispatch]);
 
   const handleAttachmentRemove = useCallback(
     (index: number) => {

@@ -6,11 +6,15 @@ import AddWorkDetaisForm from "@/components/form/AddWorkDetaisForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusCircle, ListChecks } from "lucide-react";
+import { NITCopy } from "@/components/PrintTemplet/PrintNIt-copy";
 
 interface PageProps {
   params: Promise<{ tenderId: string }>;
 }
 
+type Props = {
+  nit: any;
+};
 async function fetchWorkDetails(tenderId: string) {
   const workDetails = await db.nitDetails.findUnique({
     where: { id: tenderId },
@@ -43,6 +47,7 @@ export default async function Page({ params }: PageProps) {
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-md">
                 <ListChecks className="h-6 w-6 text-white" />
+                <NITCopy nitdetails={workDetails} />
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Work Details Management

@@ -470,6 +470,90 @@ export async function assignStaff(formData: FormData) {
   }
 }
 
+export async function bulkAssignStaff(formData: FormData) {
+  const user = await currentUser();
+  if (!user || !user.id) {
+    throw new Error("User not authenticated");
+  }
+
+  const applicationIds = formData.get("applicationIds") as string;
+  const staffId = formData.get("staffId") as string;
+
+  if (!applicationIds || !staffId) {
+    throw new Error("Missing required fields");
+  }
+
+  const applicationIdArray = applicationIds.split(",").filter((id) => id.trim());
+
+  if (applicationIdArray.length === 0) {
+    throw new Error("No applications selected");
+  }
+
+  try {
+    // Get staff details
+    const staff = await db.user.findUnique({
+      where: { id: staffId },
+      select: { email: true, name: true },
+    });
+
+    if (!staff || !staff.email || !staff.name) {
+      throw new Error("Staff not found");
+    }
+
+    // Get all applications
+    const applications = await db.warishApplication.findMany({
+      where: {
+        id: { in: applicationIdArray },
+      },
+      select: { id: true, acknowlegment: true },
+    });
+
+    if (applications.length === 0) {
+      throw new Error("No valid applications found");
+    }
+
+    // Update all applications
+    await db.warishApplication.updateMany({
+      where: {
+        id: { in: applicationIdArray },
+      },
+      data: {
+        assingstaffId: staffId,
+        warishApplicationStatus: "process",
+      },
+    });
+
+    // Send email notification for all assigned applications
+    const acknowledgmentNumbers = applications
+      .map((app) => app.acknowlegment)
+      .filter((ack) => ack)
+      .join(", ");
+
+    try {
+      console.log("Attempting to send bulk assignment email to:", staff.email);
+      const emailResponse = await sentWarishAssignNotification(
+        staff.email,
+        staff.name,
+        acknowledgmentNumbers,
+        new Date()
+      );
+      console.log("Email sent successfully:", emailResponse);
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+      // Don't throw error here, assignment was successful
+    }
+
+    revalidatePath("/admindashboard/manage-warish/assign-staff");
+    return {
+      success: true,
+      message: `Successfully assigned ${applications.length} application(s) to ${staff.name}`,
+    };
+  } catch (error) {
+    console.error("Error in bulkAssignStaff:", error);
+    throw error;
+  }
+}
+
 import { WarishApplicationPayloadProps, WarishDetailProps } from "@/types";
 
 export async function updateWarishDetails() {}

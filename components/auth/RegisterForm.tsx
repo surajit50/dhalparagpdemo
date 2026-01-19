@@ -41,6 +41,7 @@ const RegisterForm = () => {
       password: "",
       confirmPassword: "",
       name: "",
+      mobileNumber: "",
     },
     mode: "onChange",
   });
@@ -145,6 +146,30 @@ const RegisterForm = () => {
               )}
             />
 
+            {/* Mobile number field */}
+
+            <FormField
+              control={form.control}
+              name="mobileNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">
+                    Mobile Number
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="9876543210"
+                      type="text"
+                      className="pl-4 pr-10 py-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      disabled={isPending}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-500 text-sm" />
+                </FormItem>
+              )}
+            />
+
             {/* Password Field */}
             <FormField
               control={form.control}
@@ -203,6 +228,7 @@ const RegisterForm = () => {
                           {passwordStrength.label}
                         </span>
                       </div>
+                      
 
                       {/* Progress bar */}
                       <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">

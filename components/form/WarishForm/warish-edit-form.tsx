@@ -78,7 +78,7 @@ export default function WarishEditFormComponent({
     };
 
     fetchData();
-  }, [applicationId]);
+  }, [applicationId, form, toast]);
 
   // Handle form submission
   const onSubmit = async (data: WarishFormValuesTypes) => {

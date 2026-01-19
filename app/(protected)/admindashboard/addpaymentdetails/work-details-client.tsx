@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Edit, FileText, Building2, IndianRupee, Hash, Filter, X } from "lucide-react"
+import { Edit, FileText, Building2, IndianRupee, Hash, Filter, X, MoreVertical, Trash2, CheckCircle2, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import { ShowNitDetails } from "@/components/ShowNitDetails"
 import {
   Dialog,
@@ -14,7 +15,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {AddPaymentDetailsForm} from "@/components/form/AddPaymentDetails";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {AddPaymentDetailsForm} from "@/components/form/AddPaymentDetails"
+import { deletePaymentDetails, verifyPaymentDetails } from "@/action/payment-details"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface WorkDetailsClientProps {
   initialWorkDetails: any[]
@@ -22,9 +43,14 @@ interface WorkDetailsClientProps {
 }
 
 export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetailsClientProps) {
+  const router = useRouter()
   const [selectedScheme, setSelectedScheme] = useState<string>("all")
   const [openDialog, setOpenDialog] = useState(false)
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
 
   // Filter work details based on selected scheme
   const filteredWorkDetails = useMemo(() => {
@@ -54,9 +80,59 @@ export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetai
     setSelectedScheme("all")
   }
 
-  const handleEditClick = (workId: string) => {
+  const handleAddPaymentClick = (workId: string) => {
     setSelectedWorkId(workId)
     setOpenDialog(true)
+  }
+
+
+  const handleDeletePaymentClick = (paymentId: string) => {
+    setSelectedPaymentId(paymentId)
+    setOpenDeleteDialog(true)
+  }
+
+  const handleDeletePayment = async () => {
+    if (!selectedPaymentId) return
+
+    setIsDeleting(true)
+    try {
+      const result = await deletePaymentDetails(selectedPaymentId)
+      
+      if (result?.error) {
+        toast.error("Failed to delete payment details", {
+          description: result.error,
+        })
+      } else {
+        toast.success("Payment details deleted successfully")
+        router.refresh()
+      }
+    } catch (error) {
+      toast.error("Failed to delete payment details")
+    } finally {
+      setIsDeleting(false)
+      setOpenDeleteDialog(false)
+      setSelectedPaymentId(null)
+    }
+  }
+
+  const handleVerifyPayment = async (paymentId: string) => {
+    setIsVerifying(true)
+    try {
+      const result = await verifyPaymentDetails(paymentId)
+      
+      if (result?.error) {
+        toast.error("Failed to verify payment details", {
+          description: result.error,
+        })
+      } else {
+        toast.success("Payment details verified successfully")
+        router.refresh()
+      }
+    } catch (error) {
+      toast.error("Failed to verify payment details")
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   return (
@@ -177,6 +253,7 @@ export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetai
                   <TableHead className="p-4 font-semibold text-gray-700">Scheme Name</TableHead>
                   <TableHead className="p-4 font-semibold text-gray-700">Agency Name</TableHead>
                   <TableHead className="p-4 font-semibold text-gray-700">Awarded Cost</TableHead>
+                  <TableHead className="p-4 font-semibold text-gray-700">Payment Details</TableHead>
                   <TableHead className="p-4 font-semibold text-gray-700 text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -211,6 +288,78 @@ export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetai
                       <TableCell className="p-4 font-semibold text-green-700">
                         {formatCurrency(work.AwardofContract?.workorderdetails[0]?.Bidagency?.biddingAmount || 0)}
                       </TableCell>
+                      <TableCell className="p-4">
+                        {work.paymentDetails && work.paymentDetails.length > 0 ? (
+                          <div className="space-y-2">
+                            {work.paymentDetails.map((payment: any) => (
+                              <div
+                                key={payment.id}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded-md border border-gray-200"
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {payment.billType} - {payment.mbrefno}
+                                    </span>
+                                    {payment.isVerified && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Verified
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Net: {formatCurrency(payment.netAmt)}
+                                  </div>
+                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      disabled={isVerifying}
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild disabled={payment.isVerified}>
+                                      <Link
+                                        href={`/admindashboard/editpaymentdetails?paymentId=${payment.id}`}
+                                        className={payment.isVerified ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}
+                                      >
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit
+                                      </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleDeletePaymentClick(payment.id)}
+                                      disabled={payment.isVerified}
+                                      className={payment.isVerified ? "opacity-50 cursor-not-allowed" : "text-red-600"}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild disabled={payment.isVerified || isVerifying}>
+                                      <Link
+                                        href={`/admindashboard/verifypaymentdetails?paymentId=${payment.id}`}
+                                        className={payment.isVerified ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}
+                                      >
+                                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                                        {payment.isVerified ? "Verified" : "Verify"}
+                                      </Link>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">No payment details</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
                         <Dialog open={openDialog && selectedWorkId === work.id} onOpenChange={setOpenDialog}>
                           <DialogTrigger asChild>
@@ -218,10 +367,10 @@ export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetai
                               size="sm"
                               variant="outline"
                               className="hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                              onClick={() => handleEditClick(work.id)}
+                              onClick={() => handleAddPaymentClick(work.id)}
                             >
                               <Edit className="h-4 w-4 mr-2" />
-                              Edit
+                              Add Payment
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -236,18 +385,45 @@ export function WorkDetailsClient({ initialWorkDetails, schemeNames }: WorkDetai
                                 <AddPaymentDetailsForm 
                                   workId={selectedWorkId}
                                   awardedCost={work.AwardofContract?.workorderdetails[0]?.Bidagency?.biddingAmount || 0}
-                                  onSuccess={() => setOpenDialog(false)}
+                                  onSuccess={() => {
+                                    setOpenDialog(false)
+                                    router.refresh()
+                                  }}
                                 />
                               )}
                             </div>
                           </DialogContent>
                         </Dialog>
+
+
+                        {/* Delete Confirmation Dialog */}
+                        <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the payment details
+                                and all associated records.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDeletePayment}
+                                disabled={isDeleting}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-8 text-center text-gray-500">
+                    <TableCell colSpan={8} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center py-8">
                         <FileText className="h-12 w-12 text-gray-300 mb-4" />
                         <p className="text-lg">

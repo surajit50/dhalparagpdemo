@@ -39,10 +39,10 @@ export const NewPasswordSchema = z
 
 export const changePasswordSchema = z.object({
   password: z.string().min(6, {
-    message: "Minimum  6 charecter is required",
+    message: "Minimum 6 characters is required",
   }),
   newpassword: z.string().min(6, {
-    message: "Minimum  6 charecter is required",
+    message: "Minimum 6 characters is required",
   }),
 });
 
@@ -51,10 +51,20 @@ export const RegisterSchema = z
     email: z.string().email({
       message: "Please enter a valid email address",
     }),
-    password: z.string().min(8, {
-      message: "Password must be at least 8 characters long",
-    }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" })
+      .max(32, { message: "Password must be less than 32 characters" })
+      .regex(/[A-Z]/, { message: "Must contain at least one uppercase letter" })
+      .regex(/[a-z]/, { message: "Must contain at least one lowercase letter" })
+      .regex(/[0-9]/, { message: "Must contain at least one number" })
+      .regex(/[^A-Za-z0-9]/, {
+        message: "Must contain at least one special character",
+      }),
     confirmPassword: z.string(),
+    mobileNumber: z.string().regex(/^[0-9]{10}$/, {
+      message: "Mobile number must be a valid 10 digit number",
+    }),
     name: z.string().min(1, {
       message: "Name is required",
     }),
@@ -102,6 +112,12 @@ export const SettingsSchema = z
 
 export const heroImageSchema = z.object({
   heroImageDescription: z.string().min(3),
+});
+
+export const galleryImageSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  category: z.string().min(1, "Category is required"),
 });
 
 export const userProfileUpdateSchema = z.object({
@@ -179,6 +195,7 @@ export const NitBookValidationSchema = z
         /^\d+(st|nd|rd|th) call$/,
         "Call count must be in the format '1st call', '2nd call', etc."
       ),
+    percentageofworkvaluerequired: z.number().min(1).max(100).default(60),
     termsTemplateIds: z
       .array(z.string().min(1))
       .optional()

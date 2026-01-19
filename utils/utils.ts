@@ -1,3 +1,5 @@
+
+import { gpcode } from "@/constants/gpinfor";
 export async function getFileBlob(url: string) {
   try {
     const response = await fetch(url, {
@@ -187,7 +189,7 @@ export function generateMemoNumber(latestNumber: number, year: number): string {
   const paddedNumber = newNumber.toString().padStart(3, "0");
 
   // Return the formatted memo number
-  return `${paddedNumber}/DGP/(LH)/${year}`;
+  return `${paddedNumber}/${gpcode}/(LH)/${year}`;
 }
 
 export const formatDate = (date: Date): string => {

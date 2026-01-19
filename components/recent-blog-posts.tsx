@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -24,7 +25,13 @@ export default function RecentBlogPosts() {
             key={index}
             className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
           >
-            <img src={post.image || "/placeholder.svg"} alt="" className="w-full h-48 object-cover" />
+            <Image 
+              src={post.image || "/placeholder.svg"} 
+              alt={post.title} 
+              width={400}
+              height={200}
+              className="w-full h-48 object-cover" 
+            />
             <CardContent className="p-6">
               <h3 className="text-xl font-semibold mb-2 text-indigo-700">{post.title}</h3>
               <p className="text-gray-600 mb-4">{post.excerpt}</p>

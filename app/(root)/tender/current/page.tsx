@@ -13,7 +13,7 @@ import { formatDate } from "@/utils/utils";
 import { Download, Clock, FileText, Calendar, Hash } from "lucide-react";
 import { NitDetail } from "@/types/nitDetails";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { gpcode } from "@/constants/gpinfor";
 // Define the TendersTableProps interface
 interface TendersTableProps {
   tenders: NitDetail[];
@@ -77,7 +77,7 @@ function TendersTable({ tenders }: TendersTableProps) {
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-500" />
                     <p className="font-medium text-gray-900">
-                      NIT No: {tender.memoNumber}/DGP/
+                      NIT No: {tender.memoNumber}/${gpcode}/
                       {new Date(tender.publishingDate).getFullYear()}
                     </p>
                   </div>

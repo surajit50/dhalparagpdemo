@@ -35,23 +35,28 @@ export default async function AdminDashboard() {
   const applications = await getLatestWarishApplications();
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Latest Warish Applications</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Latest Warish Applications</h1>
+          <p className="text-sm text-muted-foreground mt-1">Recent inheritance certificate applications</p>
+        </div>
+      </div>
 
-      <div className="rounded-lg border shadow-sm bg-white">
+      <div className="rounded-lg border border-border/50 shadow-sm bg-card overflow-hidden">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="px-4 py-3">Acknowledgement No</TableHead>
-              <TableHead className="px-4 py-3">Applicant</TableHead>
-              <TableHead className="px-4 py-3">Deceased</TableHead>
-              <TableHead className="px-4 py-3">Legal Heirs (Top 3)</TableHead>
-              <TableHead className="px-4 py-3">Status & Timeline</TableHead>
+              <TableHead className="px-4 py-3 font-semibold">Acknowledgement No</TableHead>
+              <TableHead className="px-4 py-3 font-semibold">Applicant</TableHead>
+              <TableHead className="px-4 py-3 font-semibold">Deceased</TableHead>
+              <TableHead className="px-4 py-3 font-semibold">Legal Heirs (Top 3)</TableHead>
+              <TableHead className="px-4 py-3 font-semibold">Status & Timeline</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {applications.map((app) => (
-              <TableRow key={app.id} className="hover:bg-gray-50">
+              <TableRow key={app.id} className="hover:bg-muted/30 transition-colors">
                 <TableCell className="px-4 py-3 font-medium">
                   {app.acknowlegment}
                   <div className="text-sm text-muted-foreground mt-1">

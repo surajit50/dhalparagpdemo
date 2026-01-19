@@ -26,21 +26,16 @@ export default function Adminhomelayoutprops({
   retender,
 }: adminhomelayoutprops) {
   return (
-    <div className="flex flex-col p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-      {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-extrabold text-gray-800 pb-3 border-b-2 border-blue-200">
-          Dashboard Overview
-          <span className="block mt-1 text-sm font-normal text-blue-600">
-            Comprehensive project insights and metrics
-          </span>
-        </h1>
-      </div>
+    <div className="flex flex-col p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen w-full max-w-full overflow-x-hidden">
+    
 
-      {/* Main Content */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-7 hover:shadow-2xl transition-shadow duration-300">
+      {/* Main Content - Statistics Overview */}
+      <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-3 sm:p-4 md:p-5 lg:p-7 hover:shadow-2xl transition-shadow duration-300 w-full overflow-hidden">
         {children}
       </div>
+
+      {/* Additional Sections Grid */}
+     
     </div>
   );
 }

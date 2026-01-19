@@ -22,11 +22,18 @@ interface ExportButtonProps {
     physicalCompletionPercentage: number | null; // Added for export
     physicalCompletionDisplay: string; // Added for display (not directly used here, but part of data)
   }>;
+  financialYear?: string;
+  paymentStart?: Date;
+  paymentEnd?: Date;
 }
 
-export function ExportButton({ reportData }: ExportButtonProps) {
+export function ExportButton({ reportData, financialYear, paymentStart, paymentEnd }: ExportButtonProps) {
   const handleExport = () => {
     // Prepare data for export (flatten/format as needed)
+    const paymentPeriodLabel = paymentStart && paymentEnd
+      ? `${format(paymentStart, "MMM yy")}-${format(paymentEnd, "MMM yy")}`
+      : "Period";
+    
     const exportData = reportData.map((item) => ({
       "SL No": item.slNo,
       "Work/Activity ID": item.workActivityId,
@@ -38,7 +45,7 @@ export function ExportButton({ reportData }: ExportButtonProps) {
         ? format(item.workOrderIssueDate, "dd/MM/yyyy")
         : "N/A",
       "Order Value": item.workOrderValue,
-      "Gross Bills (Apr 24-Jun 25)": item.paymentsInPeriod,
+      [`Gross Bills (${paymentPeriodLabel})`]: item.paymentsInPeriod,
       "Completion Date": item.completionDate
         ? format(item.completionDate, "dd/MM/yyyy")
         : "",
@@ -49,7 +56,10 @@ export function ExportButton({ reportData }: ExportButtonProps) {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, "WorkOrderFinancialReport.xlsx");
+    const fileName = financialYear 
+      ? `WorkOrderFinancialReport_FY${financialYear}.xlsx`
+      : "WorkOrderFinancialReport.xlsx";
+    XLSX.writeFile(wb, fileName);
   };
 
   return (

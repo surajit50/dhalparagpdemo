@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { gpcode } from "@/constants/gpinfor";
 export const metadata = {
   title: "Published NIT",
   description: "View all published NITs and manage tenders",
@@ -54,7 +54,7 @@ export default async function PublishedNITPage() {
                 <TableCell className="font-medium">{index + 1}</TableCell>
                 <TableCell>
                   <p className="font-semibold text-primary">
-                    {nit.memoNumber}/DGP/{nit.memoDate.getFullYear()}
+                    {nit.memoNumber}/${gpcode}/{nit.memoDate.getFullYear()}
                   </p>
                 </TableCell>
                 <TableCell>{formatDate(nit.memoDate)}</TableCell>

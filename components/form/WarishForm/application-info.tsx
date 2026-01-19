@@ -30,6 +30,17 @@ import { BilingualLabel } from "./bilingual-label";
 import { villagenameOption } from "@/constants";
 import { formatDate } from "@/utils/utils";
 
+/* =======================
+   Proper Case Formatter
+======================= */
+const toProperCase = (value: string) =>
+  value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .replace(/\s+/g, " ")
+    .trimStart();
+
 interface ApplicationInfoProps {
   form: UseFormReturn<WarishFormValuesType>;
 }
@@ -40,392 +51,263 @@ export const ApplicationInfo: React.FC<ApplicationInfoProps> = ({ form }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg shadow-sm">
+
+      {/* ================= Reporting Date ================= */}
       <FormField
         control={form.control}
         name="reportingDate"
         render={({ field }) => (
           <FormItem className="flex flex-col space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
-              <BilingualLabel
-                english="Reporting Date"
-                bengali="রিপোর্টিং তারিখ"
-              />
+            <FormLabel>
+              <BilingualLabel english="Reporting Date" bengali="রিপোর্টিং তারিখ" />
             </FormLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full h-10 px-3 text-left text-sm font-normal bg-white border-gray-300 hover:bg-gray-50",
-                      !field.value && "text-gray-400"
-                    )}
+                    variant="outline"
                     disabled
-                  >
-                    {field.value ? (
-                      formatDate(field.value)
-                    ) : (
-                      <span>Pick a date / তারিখ নির্বাচন করুন</span>
+                    className={cn(
+                      "w-full h-10 text-left",
+                      !field.value && "text-muted-foreground"
                     )}
+                  >
+                    {field.value ? formatDate(field.value) : "Pick a date"}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </FormControl>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.value}
-                  onSelect={field.onChange}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
             </Popover>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Applicant Name ================= */}
       <FormField
         control={form.control}
         name="applicantName"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
-              <BilingualLabel
-                english="Applicant Name"
-                bengali="আবেদনকারীর নাম"
-              />
+          <FormItem>
+            <FormLabel>
+              <BilingualLabel english="Applicant Name" bengali="আবেদনকারীর নাম" />
             </FormLabel>
             <FormControl>
               <Input
-                placeholder="Applicant Name / আবেদনকারীর নাম"
                 {...field}
-                className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                value={field.value ?? ""}
+                onChange={(e) =>
+                  field.onChange(toProperCase(e.target.value))
+                }
+                placeholder="Applicant Name / আবেদনকারীর নাম"
               />
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Mobile Number ================= */}
       <FormField
         control={form.control}
         name="applicantMobileNumber"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
+          <FormItem>
+            <FormLabel>
               <BilingualLabel english="Mobile Number" bengali="মোবাইল নম্বর" />
             </FormLabel>
             <FormControl>
-              <Input
-                placeholder="Enter Mobile Number / মোবাইল নম্বর দিন"
-                {...field}
-                className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
+              <Input {...field} placeholder="Mobile Number" />
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Relation With Deceased ================= */}
       <FormField
         control={form.control}
         name="relationwithdeceased"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
+          <FormItem>
+            <FormLabel>
               <BilingualLabel
                 english="Relation with Deceased"
                 bengali="মৃত ব্যক্তির সাথে সম্পর্ক"
               />
             </FormLabel>
             <FormControl>
-              <Select
-                value={field.value}
-                onValueChange={(value) => {
-                  field.onChange(value);
-                }}
-              >
-                <SelectTrigger className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                  <SelectValue placeholder="Select Relation with Deceased / মৃত ব্যক্তির সাথে সম্পর্ক নির্বাচন করুন" />
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Relation" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="son">Son / পুত্র</SelectItem>
-                  <SelectItem value="daughter">Daughter / কন্যা</SelectItem>
-                  <SelectItem value="wife">Wife / স্ত্রী</SelectItem>
-                  <SelectItem value="husband">Husband / স্বামী</SelectItem>
-                  <SelectItem value="father">Father / পিতা</SelectItem>
-                  <SelectItem value="mother">Mother / মাতা</SelectItem>
-                  <SelectItem value="brother">Brother / ভাই</SelectItem>
-                  <SelectItem value="sister">Sister / বোন</SelectItem>
-                  <SelectItem value="grandson">Grandson / নাতি</SelectItem>
-                  <SelectItem value="granddaughter">
-                    Granddaughter / নাতনি
-                  </SelectItem>
-                  <SelectItem value="other">Other / অন্যান্য</SelectItem>
+                  <SelectItem value="son">Son</SelectItem>
+                  <SelectItem value="daughter">Daughter</SelectItem>
+                  <SelectItem value="wife">Wife</SelectItem>
+                  <SelectItem value="husband">Husband</SelectItem>
+                  <SelectItem value="father">Father</SelectItem>
+                  <SelectItem value="mother">Mother</SelectItem>
+                  <SelectItem value="brother">Brother</SelectItem>
+                  <SelectItem value="sister">Sister</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
-      {relationValue === "other" && (
-        <FormField
-          control={form.control}
-          name="relationwithdeceased"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <FormLabel className="text-sm font-medium text-gray-700">
-                <BilingualLabel
-                  english="Specify Other Relation"
-                  bengali="অন্যান্য সম্পর্ক উল্লেখ করুন"
-                />
-              </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Specify other relation / অন্যান্য সম্পর্ক উল্লেখ করুন"
-                  value={field.value === "other" ? "" : field.value}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </FormControl>
-              <FormMessage className="text-xs text-red-500" />
-            </FormItem>
-          )}
-        />
-      )}
-
+      {/* ================= Name of Deceased ================= */}
       <FormField
         control={form.control}
         name="nameOfDeceased"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
-              <BilingualLabel
-                english="Name of Deceased"
-                bengali="মৃত ব্যক্তির নাম"
-              />
+          <FormItem>
+            <FormLabel>
+              <BilingualLabel english="Name of Deceased" bengali="মৃত ব্যক্তির নাম" />
             </FormLabel>
             <FormControl>
               <Input
-                placeholder="Name of Deceased / মৃত ব্যক্তির নাম"
                 {...field}
-                className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                value={field.value ?? ""}
+                onChange={(e) =>
+                  field.onChange(toProperCase(e.target.value))
+                }
+                placeholder="Name of Deceased"
               />
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Date of Death ================= */}
       <FormField
         control={form.control}
         name="dateOfDeath"
         render={({ field }) => (
-          <FormItem className="flex flex-col space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
+          <FormItem>
+            <FormLabel>
               <BilingualLabel english="Date of Death" bengali="মৃত্যুর তারিখ" />
             </FormLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full h-10 px-3 text-left text-sm font-normal bg-white border-gray-300 hover:bg-gray-50",
-                      !field.value && "text-gray-400"
-                    )}
-                  >
-                    {field.value ? (
-                      formatDate(field.value)
-                    ) : (
-                      <span>Pick a date / তারিখ নির্বাচন করুন</span>
-                    )}
+                  <Button variant="outline" className="w-full text-left">
+                    {field.value ? formatDate(field.value) : "Pick a date"}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </FormControl>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent align="start">
                 <Calendar
                   mode="single"
                   selected={field.value}
                   onSelect={field.onChange}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
-                  }
-                  initialFocus
-                  // Add these props for month/year dropdowns
-                  captionLayout="dropdown"
                   fromYear={1900}
                   toYear={new Date().getFullYear()}
-                  classNames={{
-                    caption_dropdowns: "flex gap-2 px-3 pt-1",
-                    dropdown: "px-2 py-1 border rounded-md",
-                    vhidden: "sr-only",
-                  }}
+                  captionLayout="dropdown"
                 />
               </PopoverContent>
             </Popover>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Gender ================= */}
       <FormField
         control={form.control}
         name="gender"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
+          <FormItem>
+            <FormLabel>
               <BilingualLabel english="Gender" bengali="লিঙ্গ" />
             </FormLabel>
             <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex space-x-4"
-              >
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem
-                      value="male"
-                      id="gender-male"
-                      className="text-blue-500"
-                    />
-                  </FormControl>
-                  <FormLabel
-                    htmlFor="gender-male"
-                    className="text-sm font-normal text-gray-700"
-                  >
-                    Male / পুরুষ
-                  </FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem
-                      value="female"
-                      id="gender-female"
-                      className="text-blue-500"
-                    />
-                  </FormControl>
-                  <FormLabel
-                    htmlFor="gender-female"
-                    className="text-sm font-normal text-gray-700"
-                  >
-                    Female / মহিলা
-                  </FormLabel>
-                </FormItem>
+              <RadioGroup onValueChange={field.onChange} value={field.value}>
+                <RadioGroupItem value="male" /> Male
+                <RadioGroupItem value="female" /> Female
               </RadioGroup>
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Marital Status ================= */}
       <FormField
         control={form.control}
         name="maritialStatus"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
-              <BilingualLabel
-                english="Marital Status"
-                bengali="বৈবাহিক অবস্থা"
-              />
+          <FormItem>
+            <FormLabel>
+              <BilingualLabel english="Marital Status" bengali="বৈবাহিক অবস্থা" />
             </FormLabel>
             <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex space-x-4"
-              >
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem
-                      value="married"
-                      id="marital-status-married"
-                      className="text-blue-500"
-                    />
-                  </FormControl>
-                  <FormLabel
-                    htmlFor="marital-status-married"
-                    className="text-sm font-normal text-gray-700"
-                  >
-                    Married / বিবাহিত
-                  </FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem
-                      value="unmarried"
-                      id="marital-status-unmarried"
-                      className="text-blue-500"
-                    />
-                  </FormControl>
-                  <FormLabel
-                    htmlFor="marital-status-unmarried"
-                    className="text-sm font-normal text-gray-700"
-                  >
-                    Unmarried / অবিবাহিত
-                  </FormLabel>
-                </FormItem>
+              <RadioGroup onValueChange={field.onChange} value={field.value}>
+                <RadioGroupItem value="married" /> Married
+                <RadioGroupItem value="unmarried" /> Unmarried
               </RadioGroup>
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Father Name ================= */}
       <FormField
         control={form.control}
         name="fatherName"
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">
-              <BilingualLabel english="Fathers Name" bengali="পিতার নাম" />
+          <FormItem>
+            <FormLabel>
+              <BilingualLabel english="Father Name" bengali="পিতার নাম" />
             </FormLabel>
             <FormControl>
               <Input
-                placeholder="Enter Fathers Name / পিতার নাম লিখুন"
                 {...field}
-                className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                value={field.value ?? ""}
+                onChange={(e) =>
+                  field.onChange(toProperCase(e.target.value))
+                }
+                placeholder="Father Name"
               />
             </FormControl>
-            <FormMessage className="text-xs text-red-500" />
+            <FormMessage />
           </FormItem>
         )}
       />
 
+      {/* ================= Spouse Name ================= */}
       {materialdece === "married" && (
         <FormField
           control={form.control}
           name="spouseName"
           render={({ field }) => (
-            <FormItem className="space-y-2">
-              <FormLabel className="text-sm font-medium text-gray-700">
-                <BilingualLabel
-                  english="Spouses Name"
-                  bengali="স্বামী/স্ত্রীর নাম"
-                />
+            <FormItem>
+              <FormLabel>
+                <BilingualLabel english="Spouse Name" bengali="স্বামী/স্ত্রীর নাম" />
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter Spouses Name / স্বামী/স্ত্রীর নাম লিখুন"
                   {...field}
-                  className="h-10 text-sm bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  value={field.value ?? ""}
+                  onChange={(e) =>
+                    field.onChange(toProperCase(e.target.value))
+                  }
+                  placeholder="Spouse Name"
                 />
               </FormControl>
-              <FormMessage className="text-xs text-red-500" />
+              <FormMessage />
             </FormItem>
           )}
         />
       )}
 
+      {/* ================= Village ================= */}
       <FormField
         control={form.control}
         name="villageName"

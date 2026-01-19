@@ -14,7 +14,7 @@ import {
 import { updateWorkStatus } from "@/action/updateWorkStatus";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-
+import { gpcode } from "@/constants/gpinfor";
 // Define a custom type that extends ColumnDef
 type CustomColumnDef<T> = ColumnDef<T> & {
   label?: string;
@@ -37,7 +37,7 @@ export const columns: CustomColumnDef<workdetailstype>[] = [
         <div>
           <div>{`${
             row.original?.nitDetails?.memoNumber || "N/A"
-          }/DGP/${nityear}`}</div>
+          }/${gpcode}/${nityear}`}</div>
           <div className="text-sm text-muted-foreground">
             Date: {memoDate ? formatDate(memoDate) : "N/A"}
           </div>
@@ -92,7 +92,7 @@ export const columns: CustomColumnDef<workdetailstype>[] = [
     header: "Tender Status",
     label: "Tender Status",
     cell: ({ row }) => {
-      return (<div>{row.original.tenderStatus}</div>);
+      return <div>{row.original.tenderStatus}</div>;
     },
   },
   {
@@ -100,16 +100,16 @@ export const columns: CustomColumnDef<workdetailstype>[] = [
     header: "Fund Type",
     label: "Fund Type",
     cell: ({ row }) => {
-      return (<div>{row.original.ApprovedActionPlanDetails.schemeName}</div>)
+      return <div>{row.original.ApprovedActionPlanDetails.schemeName}</div>;
     },
   },
-  
+
   {
     accessorKey: "workStatus",
     header: "Work Status",
     label: "Work Status",
     cell: ({ row }) => {
-      return( <div>{row.original.workStatus}</div>);
+      return <div>{row.original.workStatus}</div>;
     },
   },
 ];

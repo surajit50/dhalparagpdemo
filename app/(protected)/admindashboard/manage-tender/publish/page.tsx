@@ -12,7 +12,7 @@ import { formatDateTime } from '@/utils/utils';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileText, Trash2 } from "lucide-react";
-
+import { gpcode } from "@/constants/gpinfor";
 
 export default async function DemoPage() {
     const today = new Date();
@@ -60,7 +60,7 @@ export default async function DemoPage() {
                             existnit.map((nit, index) => (
                                 <TableRow key={nit.id}>
                                     <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{nit.memoNumber}/DGP/2024</TableCell>
+                                    <TableCell>{nit.memoNumber}/${gpcode}/2024</TableCell>
                                     <TableCell>{formatDateTime(nit.memoDate).dateOnly}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-3">
